@@ -13,28 +13,72 @@ const questions = [
   { text: "Quel est le nouveau président de l’Astus 2026?", options: [{ t: "Enzo", isCorrect: false }, { t: "Paul", isCorrect: false }, { t: "Laura", isCorrect: true }, { t: "Macron", isCorrect: false }] },
 ];
 
-// --- Page d'Accueil ---
-function Accueil() {
-  return (
-    <div style={{ textAlign: 'center', marginTop: '100px' }}> {/* J'ai réduit le marginTop car l'image prend de la place */}
-      
-      {/* Ton Image ici */}
-      <img 
-        src="/favicon.png" // Remplace par le nom exact de ton fichier dans le dossier public
-        alt="Logo TC Quiz" 
-        style={{ width: '200px', marginBottom: '20px' }} // Tu peux ajuster la taille ici
-      />
+const questions2 = [
+  { text: "insa question 1", options: [{ t: "faux 1", isCorrect: false }, { t: "réponse bonne", isCorrect: true }, { t: "faux 2", isCorrect: false }, { t: "faux 3", isCorrect: false }] },
+  { text: "insa question 2", options: [{ t: "faux 1", isCorrect: false }, { t: "réponse bonne", isCorrect: true }] },
+];
 
-      <h1>Bienvenue sur le TC Quiz !</h1>
-      <Link to="/jeu">
-        <button style={styles.button}>Commencer le jeu</button>
-      </Link>
+const questions3 = [
+  { text: "test1 question 1", options: [{ t: "faux 1", isCorrect: false }, { t: "réponse bonne", isCorrect: true }, { t: "faux 2", isCorrect: false }, { t: "faux 3", isCorrect: false }] },
+  { text: "test1 question 2", options: [{ t: "faux 1", isCorrect: false }, { t: "réponse bonne", isCorrect: true }] },
+];
+var usedQuestions
+const questionCategory = [
+  {
+    name: "TC",
+    questions: questions
+  },
+  {
+    name: "INSA",
+    questions: questions2
+  },
+  {
+    name: "Test1",
+    questions: questions3
+  }
+]
+
+// --- Page d'Accueil ---
+function TabButtons() {
+  const [activeTab, setActiveTab] = useState(0);
+  const usedQuestions = questionCategory[activeTab].questions;
+  return (
+    <div className="tab__header" style={{ display: "flex", flexDirection: "column", width: "200px", gap: "10px"}} >
+      {questionCategory.map((item, index) => (
+               <button onClick={() => setActiveTab(index)} className={`tab__button`} key={item.name} >
+                {item.name}
+                </button>
+      ))}
     </div>
   );
 }
 
+// --- Page d'Accueil ---
+function Accueil() {
+  return (
+    <div>
+      <TabButtons />
+      <div style={{ textAlign: 'center', marginTop: '100px' }}> {/* J'ai réduit le marginTop car l'image prend de la place */}
+        
+        {/* Ton Image ici */}
+        <img 
+          src="/favicon.png" // Remplace par le nom exact de ton fichier dans le dossier public
+          alt="Logo TC Quiz" 
+          style={{ width: '200px', marginBottom: '20px' }} // Tu peux ajuster la taille ici
+        />
+
+        <h1>Bienvenue sur le TC Quiz !</h1>
+        <Link to="/jeu">
+          <button style={styles.button}>Commencer le jeu</button>
+        </Link>
+      </div>
+    </div>
+    
+  );
+}
+
 // --- Page de Jeu (Le Quiz) ---
-function Jeu() {
+function Jeu({ questions }) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
   const [showScore, setShowScore] = useState(false);
@@ -120,17 +164,18 @@ const styles = {
     justifyContent: 'center',  // Centre verticalement
     width: '180px',            // Largeur fixe pour que tous les boutons soient égaux
     transition: 'transform 0.2s', // Petit effet au survol (optionnel)
-  }
+  },
 };
 
 // --- App Principal ---
-export default function App() {
+export default function App() { // <Jeu questions={ ... }/> remplacer ... par les questions de la catégorie
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Accueil />} />
-        <Route path="/jeu" element={<Jeu />} />
-      </Routes>
-    </Router>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Accueil />} />
+          <Route path="/jeu" element={<Jeu questions={ usedQuestions }/>} />
+        </Routes>
+      </Router>
+      
   );
 }
