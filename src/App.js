@@ -1,31 +1,101 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { DndContext, closestCenter, PointerSensor, useSensor,useSensors,} from '@dnd-kit/core';
+import { SortableContext, useSortable, arrayMove, verticalListSortingStrategy,} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 // --- Les Questions ---
 const questions = [
-  { text: "Quelle est la signification de PIT ?", options: [{ t: "Passeport Informatique Telecom", img: "/astus.png", isCorrect: true }, { t: "Projet Informatique Telecom", img: "/astus.png", isCorrect: false }, { t: "Partage d’Informations pour Tous", img: "/astus.png", isCorrect: false }, { t: "Pas de IF en TC",img: "/astus.png", isCorrect: false }] },
-  { text: "En quelle année a été créée l’Astus?", image: "/astus.png", options: [{ t: "1957", isCorrect: false }, { t: "1998", isCorrect: true }, { t: "2005", isCorrect: false }, { t: "2026", isCorrect: false }] },
-  { text: "Quel est le nom de la salle réseau au rez-de-chaussée?", options: [{ t: "TP Info A", isCorrect: false }, { t: "Plateforme Radiocom", isCorrect: false }, { t: "Salle ISO", isCorrect: true }, { t: "Salle Coin-coin", isCorrect: false }] },
-  // Ajoute tes 10 questions ici sur le même modèle...
-  { text: "Combien y’a t’il de départements à l’INSA ? (en comptant le FIMI)", options: [{ t: "8", isCorrect: false }, { t: "9", isCorrect: false }, { t: "10", isCorrect: true }, { t: "67", isCorrect: false }] },
+  {text: "Quelle est la signification de PIT ?", options: [ { t: "Passeport Informatique Telecom", img: "/astus.png", isCorrect: true }, { t: "Projet Informatique Telecom", img: "/astus.png", isCorrect: false }, { t: "Partage d’Informations pour Tous", img: "/astus.png", isCorrect: false }, { t: "Pas de IF en TC", img: "/astus.png", isCorrect: false }]},
+  {text: "En quelle année a été créée l’Astus?", image: "/astus.png", options: [{ t: "1957", isCorrect: false }, { t: "1998", isCorrect: true }, { t: "2005", isCorrect: false }, { t: "2026", isCorrect: false }]},
+  {text: "Quel est le nom de la salle réseau au rez-de-chaussée?", options: [{ t: "TP Info A", isCorrect: false }, { t: "Plateforme Radiocom", isCorrect: false }, { t: "Salle ISO", isCorrect: true }, { t: "Salle Coin-coin", isCorrect: false }]},
+  {text: "Combien y’a t’il de départements à l’INSA ? (en comptant le FIMI)", options: [{ t: "8", isCorrect: false }, { t: "9", isCorrect: false }, { t: "10", isCorrect: true }, { t: "67", isCorrect: false }]},
+  {type: "image-order", text: "Trie ces événements Astus du plus ancien au plus récent", items: [ { id: "event2", label: "Soirée Casino", image: "/1.png" }, { id: "event4", label: "Nouveau bureau 2026", image: "/2.png" }, { id: "event1", label: "Création de l’Astus", image: "/3.png" }, { id: "event3", label: "Retrouvailles", image: "/4.png" }], correctOrder: ["event1", "event3", "event2", "event4"]}
 ];
 
 // --- Page d'Accueil ---
 function Accueil() {
   return (
-    <div style={{ textAlign: 'center', marginTop: '100px' }}> {/* J'ai réduit le marginTop car l'image prend de la place */}
-      
-      {/* Ton Image ici */}
-      <img 
-        src="/favicon.png" // Remplace par le nom exact de ton fichier dans le dossier public
-        alt="Logo TC Quiz" 
-        style={{ width: '200px', marginBottom: '20px' }} // Tu peux ajuster la taille ici
+    <div style={{ textAlign: 'center', marginTop: '100px' }}>
+      <img
+        src="/favicon.png"
+        alt="Logo TC Quiz"
+        style={{ width: '200px', marginBottom: '20px' }}
       />
 
       <h1>Bienvenue sur le TC Quiz !</h1>
       <Link to="/jeu">
         <button style={styles.button}>Commencer le jeu</button>
       </Link>
+    </div>
+  );
+}
+
+// --- Carte draggable pour les questions de tri ---
+function SortableImageCard({ item }) {
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: item.id });
+
+  const style = {transform: CSS.Transform.toString(transform), transition, border: '2px solid #F5BE27', borderRadius: '8px', padding: '12px', marginBottom: '12px', backgroundColor: '#f8f9fa', cursor: 'grab', maxWidth: '320px', marginLeft: 'auto', marginRight: 'auto'};
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      <img
+        src={item.image}
+        alt={item.label}
+        style={{width: '100%', maxWidth: '250px', height: '150px', objectFit: 'cover', borderRadius: '8px', marginBottom: '10px'}}
+      />
+      <div style={{ fontWeight: 'bold' }}>{item.label}</div>
+    </div>
+  );
+}
+
+// --- Question de tri d'images ---
+function ImageOrderQuestion({ question, handleAnswer }) {
+  const [items, setItems] = useState(question.items);
+  const sensors = useSensors(useSensor(PointerSensor));
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = items.findIndex((item) => item.id === active.id);
+    const newIndex = items.findIndex((item) => item.id === over.id);
+
+    setItems((prevItems) => arrayMove(prevItems, oldIndex, newIndex));
+  };
+
+  const validateOrder = () => {
+    const userOrder = items.map((item) => item.id);
+    const isCorrect =
+      JSON.stringify(userOrder) === JSON.stringify(question.correctOrder);
+
+    handleAnswer(isCorrect);
+  };
+
+  return (
+    <div>
+      <p style={{ fontSize: '1.2rem' }}>{question.text}</p>
+
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={items.map((item) => item.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          {items.map((item) => (
+            <SortableImageCard key={item.id} item={item} />
+          ))}
+        </SortableContext>
+      </DndContext>
+
+      <button onClick={validateOrder} style={{ ...styles.button, marginTop: '20px' }}>
+        Valider l’ordre
+      </button>
     </div>
   );
 }
@@ -47,6 +117,8 @@ function Jeu() {
     }
   };
 
+  const currentQ = questions[currentQuestion];
+
   return (
     <div style={{ textAlign: 'center', marginTop: '100px' }}>
       {showScore ? (
@@ -60,40 +132,41 @@ function Jeu() {
       ) : (
         <div>
           <h3>Question {currentQuestion + 1} / {questions.length}</h3>
-          <p style={{ fontSize: '1.2rem' }}>{questions[currentQuestion].text}</p>
 
-          {questions[currentQuestion].image && (
-            <img 
-              src={questions[currentQuestion].image} 
-              alt="Illustration question" 
-              style={{ 
-                width: '300px', 
-                borderRadius: '10px', 
-                marginBottom: '20px',
-                boxShadow: '0px 4px 8px rgba(0,0,0,0.1)' 
-              }} 
-            />
+          {currentQ.type === "image-order" ? (
+            <ImageOrderQuestion question={currentQ} handleAnswer={handleAnswer} />
+          ) : (
+            <>
+              <p style={{ fontSize: '1.2rem' }}>{currentQ.text}</p>
+
+              {currentQ.image && (
+                <img
+                  src={currentQ.image}
+                  alt="Illustration question"
+                  style={{ width: '300px', borderRadius: '10px', marginBottom: '20px', boxShadow: '0px 4px 8px rgba(0,0,0,0.1)' }}
+                />
+              )}
+
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap' }}>
+                {currentQ.options.map((option, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleAnswer(option.isCorrect)}
+                    style={styles.optionButton}
+                  >
+                    {option.img && (
+                      <img
+                        src={option.img}
+                        alt={option.t}
+                        style={{ width: '100px', height: '100px', objectFit: 'contain', marginBottom: '10px' }}
+                      />
+                    )}
+                    <div style={{ fontWeight: 'bold' }}>{option.t}</div>
+                  </button>
+                ))}
+              </div>
+            </>
           )}
-
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap' }}>
-            {questions[currentQuestion].options.map((option, index) => (
-              <button 
-                key={index} 
-                onClick={() => handleAnswer(option.isCorrect)}
-                style={styles.optionButton}
-              >
-                {/* Si l'option a une image, on l'affiche au-dessus du texte */}
-                {option.img && (
-                  <img 
-                    src={option.img} 
-                    alt={option.t} 
-                    style={{ width: '100px', height: '100px', objectFit: 'contain', marginBottom: '10px' }} 
-                  />
-                )}
-                <div style={{ fontWeight: 'bold' }}>{option.t}</div>
-              </button>
-            ))}
-          </div>
         </div>
       )}
     </div>
@@ -102,22 +175,8 @@ function Jeu() {
 
 // --- Styles simples ---
 const styles = {
-  // ... ton style 'button'
-  button: { padding: '10px 20px', fontSize: '1.2rem', cursor: 'pointer', backgroundColor: '#F5BE27', color: 'white', border: 'none', borderRadius: '5px' },
-  optionButton: { 
-    padding: '15px', 
-    fontSize: '1rem', 
-    cursor: 'pointer', 
-    backgroundColor: '#f8f9fa', 
-    border: '2px solid #F5BE27', 
-    borderRadius: '8px',
-    display: 'flex',           // Ajouté pour aligner image + texte
-    flexDirection: 'column',   // Empile l'image sur le texte
-    alignItems: 'center',      // Centre horizontalement
-    justifyContent: 'center',  // Centre verticalement
-    width: '180px',            // Largeur fixe pour que tous les boutons soient égaux
-    transition: 'transform 0.2s', // Petit effet au survol (optionnel)
-  }
+  button: {padding: '10px 20px', fontSize: '1.2rem', cursor: 'pointer', backgroundColor: '#F5BE27', color: 'white', border: 'none', borderRadius: '5px'},
+  optionButton: {padding: '15px', fontSize: '1rem', cursor: 'pointer', backgroundColor: '#f8f9fa', border: '2px solid #F5BE27', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '180px', transition: 'transform 0.2s'},
 };
 
 // --- App Principal ---
