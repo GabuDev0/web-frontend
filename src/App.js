@@ -1,19 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, useSortable, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-
-// --- Les Questions ---
-const questions = [
-  { text: "Quelle est la signification de PIT ?", options: [{ t: "Passeport Informatique Telecom", img: "/astus.png", isCorrect: true }, { t: "Projet Informatique Telecom", img: "/astus.png", isCorrect: false }, { t: "Partage d’Informations pour Tous", img: "/astus.png", isCorrect: false }, { t: "Pas de IF en TC", img: "/astus.png", isCorrect: false }] },
-  { text: "En quelle année a été créée l’Astus?", image: "/astus.png", options: [{ t: "1957", isCorrect: false }, { t: "1998", isCorrect: true }, { t: "2005", isCorrect: false }, { t: "2026", isCorrect: false }] },
-  { text: "Quel est le nom de la salle réseau au rez-de-chaussée?", options: [{ t: "TP Info A", isCorrect: false }, { t: "Plateforme Radiocom", isCorrect: false }, { t: "Salle ISO", isCorrect: true }, { t: "Salle Coin-coin", isCorrect: false }] },
-  { text: "Combien y’a t’il de départements à l’INSA ? (en comptant le FIMI)", options: [{ t: "8", isCorrect: false }, { t: "9", isCorrect: false }, { t: "10", isCorrect: true }, { t: "67", isCorrect: false }] },
-  { type: "image-order", text: "Trie ces événements Astus du plus ancien au plus récent", items: [{ id: "event2", label: "Soirée Casino", image: "/2.png" }, { id: "event4", label: "Nouveau bureau 2026", image: "/4.png" }, { id: "event1", label: "Création de l’Astus", image: "/1.png" }, { id: "event3", label: "Retrouvailles", image: "/3.png" }], correctOrder: ["event1", "event2", "event3", "event4"] },
-  { type: "spam-click", text: "Clique assez vite pour rendre ton projet avant la deadline. Objectif : 55 clics.", duration: 10, targetClicks: 55 },
-  { type: "image-click", text: "Où se trouve le RI sur cette carte de l’INSA ?", image: "/carte-insa.png", correctZone: { xMin: 16.6, xMax: 19.5, yMin: 67.8, yMax: 72.5 } }
-];
 
 // --- Page d'Accueil ---
 function Accueil() {
@@ -43,6 +32,8 @@ function SortableImageCard({ item }) {
 function ImageOrderQuestion({ question, handleAnswer }) {
   const [items, setItems] = useState(question.items);
   const sensors = useSensors(useSensor(PointerSensor));
+
+  useEffect(() => { setItems(question.items || []); }, [question]);
 
   const handleDragEnd = (event) => {
     const { active, over } = event;
@@ -77,6 +68,13 @@ function SpamClickQuestion({ question, handleAnswer }) {
   const [timeLeft, setTimeLeft] = useState(question.duration);
   const [started, setStarted] = useState(false);
   const [finished, setFinished] = useState(false);
+
+  useEffect(() => {
+    setClicks(0);
+    setTimeLeft(question.duration);
+    setStarted(false);
+    setFinished(false);
+  }, [question]);
 
   const startGame = () => {
     if (started || finished) return;
@@ -126,6 +124,11 @@ function ImageClickQuestion({ question, handleAnswer }) {
   const [clickedPoint, setClickedPoint] = useState(null);
   const [message, setMessage] = useState("");
 
+  useEffect(() => {
+    setClickedPoint(null);
+    setMessage("");
+  }, [question]);
+
   const handleImageClick = (event) => {
     const rect = event.target.getBoundingClientRect();
     const x = ((event.clientX - rect.left) / rect.width) * 100;
@@ -137,7 +140,6 @@ function ImageClickQuestion({ question, handleAnswer }) {
     const isCorrect = x >= xMin && x <= xMax && y >= yMin && y <= yMax;
 
     setMessage(isCorrect ? "Bien joué !" : "Mauvais endroit...");
-
     setTimeout(() => handleAnswer(isCorrect), 800);
   };
 
@@ -148,9 +150,7 @@ function ImageClickQuestion({ question, handleAnswer }) {
       <div style={{ position: 'relative', width: '90%', maxWidth: '700px', margin: '0 auto' }}>
         <img src={question.image} alt="Carte de l'INSA" onClick={handleImageClick} style={{ display: 'block', width: '100%', borderRadius: '10px', cursor: 'crosshair', boxShadow: '0px 4px 8px rgba(0,0,0,0.1)' }} />
 
-        {clickedPoint && (
-          <div style={{ position: 'absolute', left: `${clickedPoint.x}%`, top: `${clickedPoint.y}%`, transform: 'translate(-50%, -50%)', width: '14px', height: '14px', borderRadius: '50%', backgroundColor: 'red', border: '2px solid white', pointerEvents: 'none' }} />
-        )}
+        {clickedPoint && <div style={{ position: 'absolute', left: `${clickedPoint.x}%`, top: `${clickedPoint.y}%`, transform: 'translate(-50%, -50%)', width: '14px', height: '14px', borderRadius: '50%', backgroundColor: 'red', border: '2px solid white', pointerEvents: 'none' }} />}
       </div>
 
       {message && <p style={{ marginTop: '15px', fontWeight: 'bold' }}>{message}</p>}
@@ -160,16 +160,34 @@ function ImageClickQuestion({ question, handleAnswer }) {
 
 // --- Page de Jeu (Le Quiz) ---
 function Jeu() {
+  const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
   const [showScore, setShowScore] = useState(false);
 
+  useEffect(() => {
+    fetch('http://localhost:5001/api/questions')
+      .then((res) => res.json())
+      .then((data) => {
+        setQuestions(data);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error('Erreur chargement questions :', error);
+        setLoading(false);
+      });
+  }, []);
+
   const handleAnswer = (isCorrect) => {
-    if (isCorrect) setScore(score + 1);
+    if (isCorrect) setScore((prev) => prev + 1);
     const nextQuestion = currentQuestion + 1;
     if (nextQuestion < questions.length) setCurrentQuestion(nextQuestion);
     else setShowScore(true);
   };
+
+  if (loading) return <div style={{ textAlign: 'center', marginTop: '100px' }}><h2>Chargement...</h2></div>;
+  if (!questions.length) return <div style={{ textAlign: 'center', marginTop: '100px' }}><h2>Aucune question trouvée.</h2></div>;
 
   const currentQ = questions[currentQuestion];
 
