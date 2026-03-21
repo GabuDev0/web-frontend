@@ -22,7 +22,6 @@ const questions3 = [
   { text: "test1 question 1", options: [{ t: "faux 1", isCorrect: false }, { t: "réponse bonne", isCorrect: true }, { t: "faux 2", isCorrect: false }, { t: "faux 3", isCorrect: false }] },
   { text: "test1 question 2", options: [{ t: "faux 1", isCorrect: false }, { t: "réponse bonne", isCorrect: true }] },
 ];
-var usedQuestions
 const questionCategory = [
   {
     name: "TC",
@@ -38,26 +37,34 @@ const questionCategory = [
   }
 ]
 
-// --- Page d'Accueil ---
-function TabButtons() {
+function TabButtons({ setUsedQuestions }) {
   const [activeTab, setActiveTab] = useState(0);
-  const usedQuestions = questionCategory[activeTab].questions;
+
+  const handleClick = (index) => {
+    setActiveTab(index);
+    setUsedQuestions(questionCategory[index].questions);
+  };
+
   return (
     <div className="tab__header" style={{ display: "flex", flexDirection: "column", width: "200px", gap: "10px"}} >
       {questionCategory.map((item, index) => (
-               <button onClick={() => setActiveTab(index)} className={`tab__button`} key={item.name} >
-                {item.name}
-                </button>
+        <button 
+          onClick={() => handleClick(index)} 
+          className="tab__button" 
+          key={item.name}
+        >
+          {item.name}
+        </button>
       ))}
     </div>
   );
 }
 
 // --- Page d'Accueil ---
-function Accueil() {
+function Accueil({ setUsedQuestions }) {
   return (
     <div>
-      <TabButtons />
+      <TabButtons setUsedQuestions={setUsedQuestions} />
       <div style={{ textAlign: 'center', marginTop: '100px' }}> {/* J'ai réduit le marginTop car l'image prend de la place */}
         
         {/* Ton Image ici */}
@@ -168,12 +175,13 @@ const styles = {
 };
 
 // --- App Principal ---
-export default function App() { // <Jeu questions={ ... }/> remplacer ... par les questions de la catégorie
+export default function App() {
+  const [usedQuestions, setUsedQuestions] = useState(questionCategory[0].questions);
   return (
       <Router>
         <Routes>
-          <Route path="/" element={<Accueil />} />
-          <Route path="/jeu" element={<Jeu questions={ usedQuestions }/>} />
+          <Route path="/" element={<Accueil setUsedQuestions={setUsedQuestions} />} />
+          <Route path="/jeu" element={<Jeu questions={usedQuestions} />} />
         </Routes>
       </Router>
       
