@@ -37,6 +37,7 @@ const questionCategory = [
   }
 ]
 
+// --- Boutons de choix des questions ---
 function TabButtons({ setUsedQuestions }) {
   const [activeTab, setActiveTab] = useState(0);
 
@@ -46,11 +47,11 @@ function TabButtons({ setUsedQuestions }) {
   };
 
   return (
-    <div className="tab__header" style={{ display: "flex", flexDirection: "column", width: "200px", gap: "10px"}} >
+    <div className="tab_header" style={{ display: "flex", flexDirection: "column", width: "200px", gap: "10px"}} >
       {questionCategory.map((item, index) => (
         <button 
           onClick={() => handleClick(index)} 
-          className="tab__button" 
+          className="tab_button" 
           key={item.name}
         >
           {item.name}
@@ -61,20 +62,28 @@ function TabButtons({ setUsedQuestions }) {
 }
 
 // --- Page d'Accueil ---
-function Accueil({ setUsedQuestions }) {
+function Accueil({ setUsername, setUsedQuestions }) {
+
   return (
     <div>
       <TabButtons setUsedQuestions={setUsedQuestions} />
-      <div style={{ textAlign: 'center', marginTop: '100px' }}> {/* J'ai réduit le marginTop car l'image prend de la place */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "20px"}}>
         
         {/* Ton Image ici */}
         <img 
           src="/favicon.png" // Remplace par le nom exact de ton fichier dans le dossier public
           alt="Logo TC Quiz" 
-          style={{ width: '200px', marginBottom: '20px' }} // Tu peux ajuster la taille ici
+          style={{ width: '200px'}} // Tu peux ajuster la taille ici
         />
 
         <h1>Bienvenue sur le TC Quiz !</h1>
+        
+
+        <input
+          style={styles.textInput}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="Ton pseudo"
+        />
         <Link to="/jeu">
           <button style={styles.button}>Commencer le jeu</button>
         </Link>
@@ -84,8 +93,17 @@ function Accueil({ setUsedQuestions }) {
   );
 }
 
+// --- En-tête de la page de Jeu ---
+function JeuHeader( { username }) {
+  return (
+    <div className="game_header">
+      <h5>{username}</h5>
+    </div>
+    
+  )
+}
 // --- Page de Jeu (Le Quiz) ---
-function Jeu({ questions }) {
+function Jeu({ username, questions }) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
   const [showScore, setShowScore] = useState(false);
@@ -102,54 +120,58 @@ function Jeu({ questions }) {
   };
 
   return (
-    <div style={{ textAlign: 'center', marginTop: '100px' }}>
-      {showScore ? (
-        <div>
-          <h2>Terminé !</h2>
-          <p style={{ fontSize: '1.5rem' }}>Ton score est de {score} sur {questions.length}</p>
-          <Link to="/">
-            <button style={styles.button}>Revenir à l'accueil</button>
-          </Link>
-        </div>
-      ) : (
-        <div>
-          <h3>Question {currentQuestion + 1} / {questions.length}</h3>
-          <p style={{ fontSize: '1.2rem' }}>{questions[currentQuestion].text}</p>
+    <div className="game">
 
-          {questions[currentQuestion].image && (
-            <img 
-              src={questions[currentQuestion].image} 
-              alt="Illustration question" 
-              style={{ 
-                width: '300px', 
-                borderRadius: '10px', 
-                marginBottom: '20px',
-                boxShadow: '0px 4px 8px rgba(0,0,0,0.1)' 
-              }} 
-            />
-          )}
-
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap' }}>
-            {questions[currentQuestion].options.map((option, index) => (
-              <button 
-                key={index} 
-                onClick={() => handleAnswer(option.isCorrect)}
-                style={styles.optionButton}
-              >
-                {/* Si l'option a une image, on l'affiche au-dessus du texte */}
-                {option.img && (
-                  <img 
-                    src={option.img} 
-                    alt={option.t} 
-                    style={{ width: '100px', height: '100px', objectFit: 'contain', marginBottom: '10px' }} 
-                  />
-                )}
-                <div style={{ fontWeight: 'bold' }}>{option.t}</div>
-              </button>
-            ))}
+      <JeuHeader username={username} />
+      <div className="game_content" style={{ textAlign: 'center', marginTop: '100px' }}>
+        {showScore ? (
+          <div>
+            <h2>Terminé !</h2>
+            <p style={{ fontSize: '1.5rem' }}>Ton score est de {score} sur {questions.length}</p>
+            <Link to="/">
+              <button style={styles.button}>Revenir à l'accueil</button>
+            </Link>
           </div>
-        </div>
-      )}
+        ) : (
+          <div>
+            <h3>Question {currentQuestion + 1} / {questions.length}</h3>
+            <p style={{ fontSize: '1.2rem' }}>{questions[currentQuestion].text}</p>
+
+            {questions[currentQuestion].image && (
+              <img 
+                src={questions[currentQuestion].image} 
+                alt="Illustration question" 
+                style={{ 
+                  width: '300px', 
+                  borderRadius: '10px', 
+                  marginBottom: '20px',
+                  boxShadow: '0px 4px 8px rgba(0,0,0,0.1)' 
+                }} 
+              />
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap' }}>
+              {questions[currentQuestion].options.map((option, index) => (
+                <button 
+                  key={index} 
+                  onClick={() => handleAnswer(option.isCorrect)}
+                  style={styles.optionButton}
+                >
+                  {/* Si l'option a une image, on l'affiche au-dessus du texte */}
+                  {option.img && (
+                    <img 
+                      src={option.img} 
+                      alt={option.t} 
+                      style={{ width: '100px', height: '100px', objectFit: 'contain', marginBottom: '10px' }} 
+                    />
+                  )}
+                  <div style={{ fontWeight: 'bold' }}>{option.t}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -157,7 +179,15 @@ function Jeu({ questions }) {
 // --- Styles simples ---
 const styles = {
   // ... ton style 'button'
-  button: { padding: '10px 20px', fontSize: '1.2rem', cursor: 'pointer', backgroundColor: '#F5BE27', color: 'white', border: 'none', borderRadius: '5px' },
+  button: {
+    padding: '10px 20px',
+    fontSize: '1.2rem',
+    cursor: 'pointer',
+    backgroundColor: '#F5BE27',
+    color: 'white',
+    border: 'none',
+    borderRadius: '5px' },
+
   optionButton: { 
     padding: '15px', 
     fontSize: '1rem', 
@@ -172,16 +202,26 @@ const styles = {
     width: '180px',            // Largeur fixe pour que tous les boutons soient égaux
     transition: 'transform 0.2s', // Petit effet au survol (optionnel)
   },
+
+  textInput: {
+    padding: '10px 20px',
+    fontSize: '1.2rem',
+    cursor: 'pointer',
+    backgroundColor: '#f8f9fa',
+    border: 'none',
+    borderRadius: '5px' },
 };
 
 // --- App Principal ---
 export default function App() {
   const [usedQuestions, setUsedQuestions] = useState(questionCategory[0].questions);
+  const [username, setUsername] = useState("");
+
   return (
       <Router>
         <Routes>
-          <Route path="/" element={<Accueil setUsedQuestions={setUsedQuestions} />} />
-          <Route path="/jeu" element={<Jeu questions={usedQuestions} />} />
+          <Route path="/" element={<Accueil setUsername={setUsername} setUsedQuestions={setUsedQuestions} />} />  {/* Sert à changer les questions utilisées avec le hook */}
+          <Route path="/jeu" element={<Jeu username={username} questions={usedQuestions} />} />  {/* Changer les questions utilisées */}
         </Routes>
       </Router>
       
