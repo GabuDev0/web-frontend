@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 
 // --- Les Questions ---
@@ -119,6 +119,32 @@ function Jeu({ username, questions }) {
     }
   };
 
+  const sendScore = async (username, score, nbrQuestions) => {
+    try {
+      const response = await fetch("http://localhost:5001/api/scores", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ username, score, nbrQuestions})
+      });
+
+      const data = await response.json();
+      console.log({ username, score, nbrQuestions });
+      console.log("Réponse backend :", data);
+      
+
+    } catch (error) {
+      console.error("Erreur :", error);
+    }
+  };
+
+  useEffect(() => {
+    if (showScore) {
+      sendScore(username, score, questions.length);
+    }
+  }, [showScore]);
+
   return (
     <div className="game">
 
@@ -128,6 +154,7 @@ function Jeu({ username, questions }) {
           <div>
             <h2>Terminé !</h2>
             <p style={{ fontSize: '1.5rem' }}>Ton score est de {score} sur {questions.length}</p>
+
             <Link to="/">
               <button style={styles.button}>Revenir à l'accueil</button>
             </Link>
