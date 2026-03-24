@@ -87,12 +87,58 @@ function Accueil({ setUsername, setUsedQuestions }) {
         <Link to="/jeu">
           <button style={styles.button}>Commencer le jeu</button>
         </Link>
+        <Leaderboard />
       </div>
     </div>
     
   );
 }
 
+// --- Classement de la page d'accueil ---
+function Leaderboard() {
+  const [pastScores, setPastScores] = useState([]);
+
+  useEffect(() => {
+    getScore();
+  }, []);
+
+  const getScore = async () => {
+    try {
+      // Récupère les 10 meilleurs scores de la DB (le 10 est setup dans le backend)
+      const response = await fetch("http://localhost:5001/api/scores", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json"
+        },
+      });
+
+      const data = await response.json();
+      console.log("Réponse backend :", data);
+
+      // tri décroissant des scores récupérés
+      const sortedData = data.sort((a, b) => b.score - a.score);
+      
+      setPastScores(sortedData);
+
+    } catch (error) {
+      console.error("Erreur :", error);
+    }
+  };
+
+  return (
+    <div>
+      <h2>Classement 🏆</h2>
+      <ul>
+        {pastScores.map((scoreEntry, index) => (
+          <li key={index}>
+            #{index+1} - {scoreEntry.username} - ({scoreEntry.score})
+          </li>
+        ))}
+      </ul>
+
+    </div>
+  )
+}
 // --- En-tête de la page de Jeu ---
 function JeuHeader( { username }) {
   return (
