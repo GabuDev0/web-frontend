@@ -20,14 +20,133 @@ const questions = [
   { type: "image-click", text: "Où se trouve le RI sur cette carte de l’INSA ?", image: "/carte-insa.png", correctZone: { xMin: 16.6, xMax: 19.5, yMin: 67.8, yMax: 72.5 } }
 ];
 
-// --- Page d'Accueil ---
-function Accueil() {
+const questions2 = [
+  { text: "insa question 1", options: [{ t: "faux 1", isCorrect: false }, { t: "réponse bonne", isCorrect: true }, { t: "faux 2", isCorrect: false }, { t: "faux 3", isCorrect: false }] },
+  { text: "insa question 2", options: [{ t: "faux 1", isCorrect: false }, { t: "réponse bonne", isCorrect: true }] },
+];
+
+const questions3 = [
+  { text: "test1 question 1", options: [{ t: "faux 1", isCorrect: false }, { t: "réponse bonne", isCorrect: true }, { t: "faux 2", isCorrect: false }, { t: "faux 3", isCorrect: false }] },
+  { text: "test1 question 2", options: [{ t: "faux 1", isCorrect: false }, { t: "réponse bonne", isCorrect: true }] },
+];
+const questionCategory = [
+  {
+    name: "TC",
+    questions: questions
+  },
+  {
+    name: "INSA",
+    questions: questions2
+  },
+  {
+    name: "Test1",
+    questions: questions3
+  }
+]
+
+// --- Boutons de choix des questions ---
+function TabButtons({ setUsedQuestions }) {
+  const [activeTab, setActiveTab] = useState(0);
+
+  const handleClick = (index) => {
+    setActiveTab(index);
+    setUsedQuestions(questionCategory[index].questions);
+  };
+
   return (
-    <div style={{ textAlign: 'center', marginTop: '100px' }}>
-      <img src="/favicon.png" alt="Logo TC Quiz" style={{ width: '200px', marginBottom: '20px' }} />
-      <h1>Bienvenue sur le TC Quiz !</h1>
-      <Link to="/jeu"><button style={styles.button}>Commencer le jeu</button></Link>
+    <div className="tab_header" style={{ display: "flex", flexDirection: "column", width: "200px", gap: "10px"}} >
+      {questionCategory.map((item, index) => (
+        <button 
+          onClick={() => handleClick(index)} 
+          className="tab_button" 
+          key={item.name}
+        >
+          <span style={{ width: "20px", display: "inline-block" }}>
+            {activeTab === index ? "➤" : ""}
+          </span>
+          {item.name}
+        </button>
+      ))}
     </div>
+  );
+}
+// --- Classement de la page d'accueil ---
+function Leaderboard() {
+  const [pastScores, setPastScores] = useState([]);
+
+  useEffect(() => {
+    getScore();
+  }, []);
+
+  const getScore = async () => {
+    try {
+      // Récupère les 10 meilleurs scores de la DB (le 10 est setup dans le backend)
+      const response = await fetch("http://localhost:5001/api/scores", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json"
+        },
+      });
+
+      const data = await response.json();
+      console.log("Réponse backend :", data);
+
+      // tri décroissant des scores récupérés
+      const sortedData = data.sort((a, b) => b.score - a.score);
+      
+      setPastScores(sortedData);
+
+    } catch (error) {
+      console.error("Erreur :", error);
+    }
+  };
+
+  return (
+    <div>
+      <h2>Classement 🏆</h2>
+      <ul>
+        {pastScores.map((scoreEntry, index) => (
+          <li key={index}>
+            #{index+1} - {scoreEntry.username} - ({scoreEntry.score})
+          </li>
+        ))}
+      </ul>
+
+    </div>
+  )
+}
+
+// --- Page d'Accueil ---
+function Accueil({ setUsername, setUsedQuestions }) {
+  return (
+    <div>
+      <TabButtons setUsedQuestions={setUsedQuestions} />
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "20px"}}>
+        
+        {/* Ton Image ici */}
+        <img 
+          src="/favicon.png" // Remplace par le nom exact de ton fichier dans le dossier public
+          alt="Logo TC Quiz" 
+          style={{ width: '200px'}} // Tu peux ajuster la taille ici
+        />
+
+        <h1>Bienvenue sur le TC Quiz !</h1>
+        
+
+        <input
+          style={styles.textInput}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="Ton pseudo"
+        />
+        <Link to="/jeu">
+          <button style={styles.button}>Commencer le jeu</button>
+        </Link>
+        <Leaderboard />
+      </div>
+    </div>
+
+    
+    
   );
 }
 
@@ -164,13 +283,39 @@ function ImageClickQuestion({ question, handleAnswer }) {
 }
 
 // --- Page de Jeu (Le Quiz) ---
-function Jeu() {
+function Jeu({ username, questions }) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
   const [showScore, setShowScore] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const [feedbackMsg, setFeedbackMsg] = useState("");
   const [countdown, setCountdown] = useState(3);
+
+  const sendScore = async (username, score, nbrQuestions) => {
+    try {
+      const response = await fetch("http://localhost:5001/api/scores", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ username, score, nbrQuestions})
+      });
+
+      const data = await response.json();
+      console.log({ username, score, nbrQuestions });
+      console.log("Réponse backend :", data);
+      
+
+    } catch (error) {
+      console.error("Erreur :", error);
+    }
+  };
+
+  useEffect(() => {
+    if (showScore) {
+      sendScore(username, score, questions.length);
+    }
+  }, [showScore, username, score, questions.length]);
 
   useEffect(() =>{
     let timer;
@@ -237,6 +382,7 @@ function Jeu() {
 
   const currentQ = questions[currentQuestion];
 
+  // rajouter <JeuHeader username={username} />
   return (
     <div style={{ textAlign: 'center', marginTop: '100px', position: 'relative' }}> 
 
@@ -317,18 +463,52 @@ function Jeu() {
 
 // --- Styles simples ---
 const styles = {
-  button: { padding: '10px 20px', fontSize: '1.2rem', cursor: 'pointer', backgroundColor: '#F5BE27', color: 'white', border: 'none', borderRadius: '5px' },
-  optionButton: { padding: '15px', fontSize: '1rem', cursor: 'pointer', backgroundColor: '#f8f9fa', border: '2px solid #F5BE27', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '180px', transition: 'transform 0.2s' }
+  // ... ton style 'button'
+  button: {
+    padding: '10px 20px',
+    fontSize: '1.2rem',
+    cursor: 'pointer',
+    backgroundColor: '#F5BE27',
+    color: 'white',
+    border: 'none',
+    borderRadius: '5px' },
+
+  optionButton: { 
+    padding: '15px', 
+    fontSize: '1rem', 
+    cursor: 'pointer', 
+    backgroundColor: '#f8f9fa', 
+    border: '2px solid #F5BE27', 
+    borderRadius: '8px',
+    display: 'flex',           // Ajouté pour aligner image + texte
+    flexDirection: 'column',   // Empile l'image sur le texte
+    alignItems: 'center',      // Centre horizontalement
+    justifyContent: 'center',  // Centre verticalement
+    width: '180px',            // Largeur fixe pour que tous les boutons soient égaux
+    transition: 'transform 0.2s', // Petit effet au survol (optionnel)
+  },
+
+  textInput: {
+    padding: '10px 20px',
+    fontSize: '1.2rem',
+    cursor: 'pointer',
+    backgroundColor: '#f8f9fa',
+    border: 'none',
+    borderRadius: '5px' },
 };
 
 // --- App Principal ---
 export default function App() {
+  const [usedQuestions, setUsedQuestions] = useState(questionCategory[0].questions);
+  const [username, setUsername] = useState("");
+
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Accueil />} />
-        <Route path="/jeu" element={<Jeu />} />
-      </Routes>
-    </Router>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Accueil setUsername={setUsername} setUsedQuestions={setUsedQuestions} />} />  {/* Sert à changer les questions utilisées avec le hook */}
+          <Route path="/jeu" element={<Jeu username={username} questions={usedQuestions} />} />  {/* Changer les questions utilisées */}
+        </Routes>
+      </Router>
+      
   );
 }
