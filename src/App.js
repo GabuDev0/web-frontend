@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, useSortable, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -91,6 +91,9 @@ function SpamClickQuestion({ question, handleAnswer }) {
     const interval = setInterval(() => {
       currentTime -= 1;
       setTimeLeft(currentTime);
+// --- Boutons de choix des questions ---
+function TabButtons({ setUsedQuestions }) {
+  const [activeTab, setActiveTab] = useState(0);
 
       if (currentTime <= 0) {
         clearInterval(interval);
@@ -118,6 +121,17 @@ function SpamClickQuestion({ question, handleAnswer }) {
       <div>
         <button onClick={handleClick} disabled={!started || finished} style={{ padding: '30px 50px', fontSize: '1.5rem', cursor: started && !finished ? 'pointer' : 'not-allowed', backgroundColor: started && !finished ? '#F5BE27' : '#ccc', color: 'white', border: 'none', borderRadius: '12px' }}>
           CLIQUE ICI
+    <div className="tab_header" style={{ display: "flex", flexDirection: "column", width: "200px", gap: "10px"}} >
+      {questionCategory.map((item, index) => (
+        <button 
+          onClick={() => handleClick(index)} 
+          className="tab_button" 
+          key={item.name}
+        >
+          <span style={{ width: "20px", display: "inline-block" }}>
+            {activeTab === index ? "➤" : ""}
+          </span>
+          {item.name}
         </button>
       </div>
 
@@ -156,6 +170,33 @@ function ImageClickQuestion({ question, handleAnswer }) {
         {clickedPoint && (
           <div style={{ position: 'absolute', left: `${clickedPoint.x}%`, top: `${clickedPoint.y}%`, transform: 'translate(-50%, -50%)', width: '14px', height: '14px', borderRadius: '50%', backgroundColor: 'red', border: '2px solid white', pointerEvents: 'none' }} />
         )}
+// --- Page d'Accueil ---
+function Accueil({ setUsername, setUsedQuestions }) {
+
+  return (
+    <div>
+      <TabButtons setUsedQuestions={setUsedQuestions} />
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "20px"}}>
+        
+        {/* Ton Image ici */}
+        <img 
+          src="/favicon.png" // Remplace par le nom exact de ton fichier dans le dossier public
+          alt="Logo TC Quiz" 
+          style={{ width: '200px'}} // Tu peux ajuster la taille ici
+        />
+
+        <h1>Bienvenue sur le TC Quiz !</h1>
+        
+
+        <input
+          style={styles.textInput}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="Ton pseudo"
+        />
+        <Link to="/jeu">
+          <button style={styles.button}>Commencer le jeu</button>
+        </Link>
+        <Leaderboard />
       </div>
 
       {message && <p style={{ marginTop: '15px', fontWeight: 'bold' }}>{message}</p>}
@@ -163,8 +204,62 @@ function ImageClickQuestion({ question, handleAnswer }) {
   );
 }
 
+// --- Classement de la page d'accueil ---
+function Leaderboard() {
+  const [pastScores, setPastScores] = useState([]);
+
+  useEffect(() => {
+    getScore();
+  }, []);
+
+  const getScore = async () => {
+    try {
+      // Récupère les 10 meilleurs scores de la DB (le 10 est setup dans le backend)
+      const response = await fetch("http://localhost:5001/api/scores", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json"
+        },
+      });
+
+      const data = await response.json();
+      console.log("Réponse backend :", data);
+
+      // tri décroissant des scores récupérés
+      const sortedData = data.sort((a, b) => b.score - a.score);
+      
+      setPastScores(sortedData);
+
+    } catch (error) {
+      console.error("Erreur :", error);
+    }
+  };
+
+  return (
+    <div>
+      <h2>Classement 🏆</h2>
+      <ul>
+        {pastScores.map((scoreEntry, index) => (
+          <li key={index}>
+            #{index+1} - {scoreEntry.username} - ({scoreEntry.score})
+          </li>
+        ))}
+      </ul>
+
+    </div>
+  )
+}
+// --- En-tête de la page de Jeu ---
+function JeuHeader( { username }) {
+  return (
+    <div className="game_header">
+      <h5>{username}</h5>
+    </div>
+    
+  )
+}
 // --- Page de Jeu (Le Quiz) ---
-function Jeu() {
+function Jeu({ username, questions }) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
   const [showScore, setShowScore] = useState(false);
@@ -311,24 +406,138 @@ function Jeu() {
         </> /* 👉 2. On ferme le Fragment du bloc "Jeu normal" ici */
       )} 
 
+  const sendScore = async (username, score, nbrQuestions) => {
+    try {
+      const response = await fetch("http://localhost:5001/api/scores", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ username, score, nbrQuestions})
+      });
+
+      const data = await response.json();
+      console.log({ username, score, nbrQuestions });
+      console.log("Réponse backend :", data);
+      
+
+    } catch (error) {
+      console.error("Erreur :", error);
+    }
+  };
+
+  useEffect(() => {
+    if (showScore) {
+      sendScore(username, score, questions.length);
+    }
+  }, [showScore, username, score, questions.length]);
+
+  return (
+    <div className="game">
+
+      <JeuHeader username={username} />
+      <div className="game_content" style={{ textAlign: 'center', marginTop: '100px' }}>
+        {showScore ? (
+          <div>
+            <h2>Terminé !</h2>
+            <p style={{ fontSize: '1.5rem' }}>Ton score est de {score} sur {questions.length}</p>
+
+            <Link to="/">
+              <button style={styles.button}>Revenir à l'accueil</button>
+            </Link>
+          </div>
+        ) : (
+          <div>
+            <h3>Question {currentQuestion + 1} / {questions.length}</h3>
+            <p style={{ fontSize: '1.2rem' }}>{questions[currentQuestion].text}</p>
+
+            {questions[currentQuestion].image && (
+              <img 
+                src={questions[currentQuestion].image} 
+                alt="Illustration question" 
+                style={{ 
+                  width: '300px', 
+                  borderRadius: '10px', 
+                  marginBottom: '20px',
+                  boxShadow: '0px 4px 8px rgba(0,0,0,0.1)' 
+                }} 
+              />
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap' }}>
+              {questions[currentQuestion].options.map((option, index) => (
+                <button 
+                  key={index} 
+                  onClick={() => handleAnswer(option.isCorrect)}
+                  style={styles.optionButton}
+                >
+                  {/* Si l'option a une image, on l'affiche au-dessus du texte */}
+                  {option.img && (
+                    <img 
+                      src={option.img} 
+                      alt={option.t} 
+                      style={{ width: '100px', height: '100px', objectFit: 'contain', marginBottom: '10px' }} 
+                    />
+                  )}
+                  <div style={{ fontWeight: 'bold' }}>{option.t}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
 // --- Styles simples ---
 const styles = {
-  button: { padding: '10px 20px', fontSize: '1.2rem', cursor: 'pointer', backgroundColor: '#F5BE27', color: 'white', border: 'none', borderRadius: '5px' },
-  optionButton: { padding: '15px', fontSize: '1rem', cursor: 'pointer', backgroundColor: '#f8f9fa', border: '2px solid #F5BE27', borderRadius: '8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '180px', transition: 'transform 0.2s' }
+  // ... ton style 'button'
+  button: {
+    padding: '10px 20px',
+    fontSize: '1.2rem',
+    cursor: 'pointer',
+    backgroundColor: '#F5BE27',
+    color: 'white',
+    border: 'none',
+    borderRadius: '5px' },
+
+  optionButton: { 
+    padding: '15px', 
+    fontSize: '1rem', 
+    cursor: 'pointer', 
+    backgroundColor: '#f8f9fa', 
+    border: '2px solid #F5BE27', 
+    borderRadius: '8px',
+    display: 'flex',           // Ajouté pour aligner image + texte
+    flexDirection: 'column',   // Empile l'image sur le texte
+    alignItems: 'center',      // Centre horizontalement
+    justifyContent: 'center',  // Centre verticalement
+    width: '180px',            // Largeur fixe pour que tous les boutons soient égaux
+    transition: 'transform 0.2s', // Petit effet au survol (optionnel)
+  },
+
+  textInput: {
+    padding: '10px 20px',
+    fontSize: '1.2rem',
+    cursor: 'pointer',
+    backgroundColor: '#f8f9fa',
+    border: 'none',
+    borderRadius: '5px' },
 };
 
 // --- App Principal ---
 export default function App() {
+  const [usedQuestions, setUsedQuestions] = useState(questionCategory[0].questions);
+  const [username, setUsername] = useState("");
+
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Accueil />} />
-        <Route path="/jeu" element={<Jeu />} />
-      </Routes>
-    </Router>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Accueil setUsername={setUsername} setUsedQuestions={setUsedQuestions} />} />  {/* Sert à changer les questions utilisées avec le hook */}
+          <Route path="/jeu" element={<Jeu username={username} questions={usedQuestions} />} />  {/* Changer les questions utilisées */}
+        </Routes>
+      </Router>
+      
   );
 }
