@@ -308,7 +308,7 @@ function Jeu() {
             </div>
           )}
 
-        </> /* 👉 2. On ferme le Fragment du bloc "Jeu normal" ici */
+        </> 
       )} 
 
     </div>
