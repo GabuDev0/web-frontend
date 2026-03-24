@@ -54,6 +54,9 @@ function TabButtons({ setUsedQuestions }) {
           className="tab_button" 
           key={item.name}
         >
+          <span style={{ width: "20px", display: "inline-block" }}>
+            {activeTab === index ? "➤" : ""}
+          </span>
           {item.name}
         </button>
       ))}
@@ -189,7 +192,7 @@ function Jeu({ username, questions }) {
     if (showScore) {
       sendScore(username, score, questions.length);
     }
-  }, [showScore]);
+  }, [showScore, username, score, questions.length]);
 
   return (
     <div className="game">
