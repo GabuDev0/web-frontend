@@ -156,3 +156,67 @@ button:active {
   transform: scale(0.92) !important; 
   box-shadow: inset 0px 4px 8px rgba(0, 0, 0, 0.2) !important; 
 }
+
+/* page d'accueil avec fond animé et carte en verre dépoli */
+
+.accueil-background {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  /* Un dégradé */
+  background: linear-gradient(-45deg, #ffffff, #f1f3f5, #fff5d6, #ffffff);
+  background-size: 400% 400%;
+  animation: gradientWave 15s ease infinite;
+}
+
+@keyframes gradientWave {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* La carte centrale en "Verre dépoli" (Glassmorphism) */
+.glass-card {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+  padding: 40px;
+  max-width: 600px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Le nouveau style des boutons de catégories (Pilules horizontales) */
+.tabs-container {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.tab-pill {
+  padding: 8px 20px;
+  border-radius: 50px;
+  border: 2px solid #F5BE27;
+  background: transparent;
+  color: #333;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tab-pill.active {
+  background: #F5BE27;
+  color: white;
+  box-shadow: 0 4px 10px rgba(245, 190, 39, 0.4);
+  transform: translateY(-2px);
+}

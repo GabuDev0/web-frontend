@@ -54,16 +54,13 @@ function TabButtons({ setUsedQuestions }) {
   };
 
   return (
-    <div className="tab_header" style={{ display: "flex", flexDirection: "column", width: "200px", gap: "10px"}} >
+    <div className="tabs-container">
       {questionCategory.map((item, index) => (
         <button 
           onClick={() => handleClick(index)} 
-          className="tab_button" 
+          className={`tab-pill ${activeTab === index ? "active" : ""}`} 
           key={item.name}
         >
-          <span style={{ width: "20px", display: "inline-block" }}>
-            {activeTab === index ? "➤" : ""}
-          </span>
           {item.name}
         </button>
       ))}
@@ -119,34 +116,34 @@ function Leaderboard() {
 // --- Page d'Accueil ---
 function Accueil({ setUsername, setUsedQuestions }) {
   return (
-    <div>
-      <TabButtons setUsedQuestions={setUsedQuestions} />
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "20px"}}>
+    <div className="accueil-background">
+      <div className="glass-card">
         
-        {/* Ton Image ici */}
         <img 
-          src="/favicon.png" // Remplace par le nom exact de ton fichier dans le dossier public
+          src="/favicon.png" 
           alt="Logo TC Quiz" 
-          style={{ width: '200px'}} // Tu peux ajuster la taille ici
+          style={{ width: '150px', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.1))' }} 
         />
 
-        <h1>Bienvenue sur le TC Quiz !</h1>
+        <h1 style={{ color: '#333', margin: '0' }}>Le TC Quiz</h1>
         
+        <TabButtons setUsedQuestions={setUsedQuestions} />
 
         <input
-          style={styles.textInput}
+          style={{...styles.textInput, textAlign: 'center', width: '80%', border: '2px solid #eee'}}
           onChange={(e) => setUsername(e.target.value)}
-          placeholder="Ton pseudo"
+          placeholder="Entre ton pseudo..."
         />
-        <Link to="/jeu">
-          <button style={styles.button}>Commencer le jeu</button>
+        
+        <Link to="/jeu" style={{ width: '100%', textDecoration: 'none', display: 'flex', justifyContent: 'center' }}>
+          <button style={{...styles.button, width: '80%', padding: '15px', borderRadius: '50px', fontSize: '1.4rem', boxShadow: '0 4px 15px rgba(245, 190, 39, 0.5)'}}>
+            LANCER LA PARTIE
+          </button>
         </Link>
+        
         <Leaderboard />
       </div>
     </div>
-
-    
-    
   );
 }
 
