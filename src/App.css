@@ -36,3 +36,281 @@
     transform: rotate(360deg);
   }
 }
+
+.animate-pop {
+  .animate-pop {
+  animation: popInAndFade 2s forwards;
+}
+}
+
+@keyframes popInAndFade {
+  0% { transform: translateX(-50%) scale(0.5); opacity: 0; }
+  10% { transform: translateX(-50%) scale(1.1); opacity: 1; }
+  15% { transform: translateX(-50%) scale(1); opacity: 1; }
+  80% { transform: translateX(-50%) scale(1); opacity: 1; }
+  100% { transform: translateX(-50%) scale(0.9); opacity: 0; }
+}
+
+.animate-shake {
+  animation: shakeX 0.4s ease-in-out forwards;
+}
+
+@keyframes shakeX {
+  0%, 100% { transform: translateX(-50%); }
+  20%, 60% { transform: translateX(calc(-50% - 15px)); }
+  40%, 80% { transform: translateX(calc(-50% + 15px)); }
+}
+
+.telecom-countdown-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 400px;
+  background-color: #1a1a1a; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  border-radius: 15px; 
+  overflow: hidden;
+  box-shadow: inset 0 0 60px rgba(0,0,0,0.8);
+}
+
+.telecom-screen::before {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+  background-size: 100% 4px; 
+  pointer-events: none; 
+}
+
+
+.telecom-text {
+  font-family: 'Courier New', Courier, monospace; 
+  font-size: 6rem; 
+  margin: 0;
+  color: #F5BE27; 
+  text-transform: uppercase;
+  position: relative;
+  z-index: 3;
+
+  text-shadow: 
+    0 0 10px rgba(245, 190, 39, 0.8), 
+    0 0 20px rgba(245, 190, 39, 0.6), 
+    0 0 40px rgba(200, 150, 20, 0.4);
+ 
+  animation: radarPulse 0.5s infinite;
+}
+
+@keyframes radarPulse {
+  0% { 
+    opacity: 0.2; 
+    transform: scale(0.8); 
+  }
+  15% { 
+    opacity: 1; 
+    transform: scale(1.1); 
+    text-shadow: 0 0 20px #F5BE27, 0 0 40px #F5BE27, 0 0 80px #F5BE27; /* Flash intense */
+  }
+  30% { 
+    opacity: 0.9; 
+    transform: scale(1); 
+  }
+  100% { 
+    opacity: 0.2; 
+    transform: scale(0.9); 
+  }
+}
+
+.fade-out-end {
+  
+  animation: dissolveToWhite 1s forwards; 
+}
+
+@keyframes dissolveToWhite {
+  0% { 
+    background-color: #1a1a1a; 
+    opacity: 1; 
+  }
+  100% { 
+    background-color: #ffffff; 
+    opacity: 0; 
+  }
+}
+
+/* boutons avec effet de pression */
+button {
+  transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out !important;
+}
+
+
+button:active {
+  transform: scale(0.92) !important; 
+  box-shadow: inset 0px 4px 8px rgba(0, 0, 0, 0.2) !important; 
+}
+
+/* page d'accueil avec fond animé et carte en verre dépoli */
+
+.accueil-background {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  /* Un dégradé */
+  background: linear-gradient(-45deg, #ffffff, #f1f3f5, #fff5d6, #ffffff);
+  background-size: 400% 400%;
+  animation: gradientWave 15s ease infinite;
+}
+
+@keyframes gradientWave {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* La carte centrale en "Verre dépoli" (Glassmorphism) */
+.glass-card {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+  padding: 40px;
+  max-width: 600px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Le nouveau style des boutons de catégories (Pilules horizontales) */
+.tabs-container {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.tab-pill {
+  padding: 8px 20px;
+  border-radius: 50px;
+  border: 2px solid #F5BE27;
+  background: transparent;
+  color: #333;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tab-pill.active {
+  background: #F5BE27;
+  color: white;
+  box-shadow: 0 4px 10px rgba(245, 190, 39, 0.4);
+  transform: translateY(-2px);
+}
+
+/* --- LAYOUT DE L'ACCUEIL (2 COLONNES) --- */
+.home-layout {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 40px;
+  width: 90%;
+  max-width: 1200px;
+  margin: 40px auto;
+}
+
+/* Responsive : Si l'écran est trop petit, on repasse en 1 colonne (empilé) */
+@media (max-width: 900px) {
+  .home-layout {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+/* --- LE LEADERBOARD ESTHÉTIQUE --- */
+.leaderboard-container {
+  width: 100%;
+  min-width: 300px;
+}
+
+.leaderboard-title {
+  color: #333;
+  text-align: center;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.leaderboard-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Les lignes du classement */
+.leaderboard-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  font-weight: bold;
+  color: #444;
+  
+  /* L'animation d'apparition */
+  opacity: 0;
+  transform: translateX(30px);
+  animation: slideInRight 0.5s ease-out forwards;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.leaderboard-item:hover {
+  transform: scale(1.02) translateX(0) !important;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* Animation d'entrée */
+@keyframes slideInRight {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ✨ Couleurs spéciales pour le TOP 3 ✨ */
+.rank-1 { background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%); color: white; border: none; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4); }
+.rank-2 { background: linear-gradient(135deg, #E0E0E0 0%, #BDBDBD 100%); color: #333; border: none; }
+.rank-3 { background: linear-gradient(135deg, #CD7F32 0%, #A0522D 100%); color: white; border: none; }
+
+.rank-badge {
+  font-size: 1.2rem;
+  font-weight: 900;
+  width: 30px;
+}
+
+.player-score {
+  background: rgba(0,0,0,0.1);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+}
