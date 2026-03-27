@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState, useEffect} from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, useSortable, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -17,9 +17,8 @@ const questionCategory = [
 ];
 
 // --- Boutons de choix des questions ---
-function TabButtons({ setUsedQuestions }) {
+function TabButtons({ category, setCategory, setUsedQuestions }) {
   const [allQuestions, setAllQuestions] = useState([]);
-  const [activeTab, setActiveTab] = useState(0);
 
   useEffect(() => {
     getQuestions();
@@ -45,17 +44,17 @@ function TabButtons({ setUsedQuestions }) {
     const categoryQuestions = [];
 
     for (const q of allQuestions) {
-      if (Number(q.category) === activeTab) {
+      if (Number(q.category) === category) {
         categoryQuestions.push(q);
       }
     }
 
     setUsedQuestions(categoryQuestions);
 
-  }, [activeTab, allQuestions]);
+  }, [category, allQuestions]);
 
   const handleClick = (index) => {
-    setActiveTab(index);
+    setCategory(index);
   };
 
   return (
@@ -63,7 +62,7 @@ function TabButtons({ setUsedQuestions }) {
       {questionCategory.map((item, index) => (
         <button 
           onClick={() => handleClick(index)} 
-          className={`tab-pill ${activeTab === index ? "active" : ""}`} 
+          className={`tab-pill ${category === index ? "active" : ""}`} 
           key={item.name}
         >
           {item.name}
@@ -74,12 +73,31 @@ function TabButtons({ setUsedQuestions }) {
 }
 
 // --- Classement de la page d'accueil ---
-function Leaderboard() {
-  const [pastScores, setPastScores] = useState([]);
+function Leaderboard( { category, setCategory } ) {
+  const [shownScoreEntries, setShownScoreEntries] = useState([]);
+  const [allScoreEntries, setAllScoreEntries] = useState([]);
 
   useEffect(() => {
     getScore();
   }, []);
+
+  useEffect(() => {
+    sortScore();
+  }, [category, allScoreEntries])
+
+  const sortScore = async () => {
+    const filtered = [];
+
+      for (const scoreEntry of allScoreEntries) {
+        if (scoreEntry.category === category) {
+          filtered.push(scoreEntry);
+        }
+      }
+
+      const sortedData = filtered.sort((a, b) => b.score - a.score);
+
+      setShownScoreEntries(sortedData);
+  }
 
   const getScore = async () => {
     try {
@@ -88,8 +106,9 @@ function Leaderboard() {
         headers: { "Content-Type": "application/json" },
       });
       const data = await response.json();
-      const sortedData = data.sort((a, b) => b.score - a.score);
-      setPastScores(sortedData);
+      
+      setAllScoreEntries(data);
+
       console.log("getScore backend response:", data)
     } catch (error) {
       console.error("Erreur :", error);
@@ -100,7 +119,7 @@ function Leaderboard() {
     <div className="leaderboard-container">
       <h2 className="leaderboard-title">Classement 🏆</h2>
       <ul className="leaderboard-list">
-        {pastScores.map((scoreEntry, index) => (
+        {shownScoreEntries.map((scoreEntry, index) => (
           <li 
             key={index} 
             /* On ajoute la classe rank-1, rank-2, rank-3 si c'est le top 3 */
@@ -118,7 +137,7 @@ function Leaderboard() {
 }
 
 // --- Page d'Accueil ---
-function Accueil({ setUsername, setUsedQuestions }) {
+function Accueil({ category, setCategory, setUsername, setUsedQuestions }) {
 
   useEffect(() => {
     const audioAccueil = new Audio('/MUSIQUE_ACCUEIL.mp3');
@@ -143,7 +162,7 @@ function Accueil({ setUsername, setUsedQuestions }) {
           <img src="/favicon.png" alt="Logo TC Quiz" style={{ width: '150px', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.1))' }} />
           <h1 style={{ color: '#333', margin: '0' }}>Le TC Quiz</h1>
           
-          <TabButtons setUsedQuestions={setUsedQuestions} />
+          <TabButtons category={category} setCategory={setCategory} setUsedQuestions={setUsedQuestions} />
           
 
           <input
@@ -160,7 +179,7 @@ function Accueil({ setUsername, setUsedQuestions }) {
         </div>
 
         <div className="glass-card-secondary">
-          <Leaderboard />
+          <Leaderboard category={category} setCategory={setCategory} />
         </div>
 
       </div>
@@ -354,7 +373,7 @@ function ImageClickQuestion({ question, handleAnswer }) {
 }
 
 // --- Page de Jeu (Le Quiz) ---
-function Jeu({ username, questions }) {
+function Jeu({ category, username, questions }) {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
   const [showScore, setShowScore] = useState(false);
@@ -375,18 +394,18 @@ function Jeu({ username, questions }) {
     };
   }, []);
 
-  const sendScore = async (username, score, nbrQuestions) => {
+  const sendScore = async (username, score, nbrQuestions, category) => {
     try {
       const response = await fetch("http://localhost:5001/api/scores", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ username, score, nbrQuestions})
+        body: JSON.stringify({ username, score, nbrQuestions, category })
       });
 
       const data = await response.json();
-      console.log({ username, score, nbrQuestions });
+      console.log({ username, score, nbrQuestions, category });
       console.log("sendScore backend response:", data);
       
 
@@ -396,8 +415,9 @@ function Jeu({ username, questions }) {
   };
 
   useEffect(() => {
+    console.log(category);
     if (showScore) {
-      sendScore(username, score, questions.length);
+      sendScore(username, score, questions.length, category);
       const pourcentage = (score / questions.length) * 100;
       let sonFinal;
 
@@ -411,7 +431,7 @@ function Jeu({ username, questions }) {
 
       sonFinal.play().catch(e => console.log("Erreur audio fin :", e));
     }
-  }, [showScore, username, score, questions.length]);
+  }, [showScore, username, score, questions.length, category]);
 
   useEffect(() =>{
     let timer;
@@ -599,12 +619,13 @@ const styles = {
 export default function App() {
   const [usedQuestions, setUsedQuestions] = useState([]);
   const [username, setUsername] = useState("");
+  const [category, setCategory] = useState(0);
 
   return (
       <Router>
         <Routes>
-          <Route path="/" element={<Accueil setUsername={setUsername} setUsedQuestions={setUsedQuestions} />} />  {/* Sert à changer les questions utilisées avec le hook */}
-          <Route path="/jeu" element={<Jeu username={username} questions={usedQuestions} />} />  {/* Changer les questions utilisées */}
+          <Route path="/" element={<Accueil category={category} setCategory={setCategory} setUsername={setUsername} setUsedQuestions={setUsedQuestions} />} />  {/* Sert à changer les questions utilisées avec le hook */}
+          <Route path="/jeu" element={<Jeu category={category} username={username} questions={usedQuestions} />} />  {/* Changer les questions utilisées */}
         </Routes>
       </Router>
       
