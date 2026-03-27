@@ -9,29 +9,6 @@ const messagesTrue = ["Sublime !","Bravo !", "Trop fort !", "Tout juste !", "Gé
 const messagesFalse = ["Peut mieux faire !","Raté...", "Presque !", "Une prochaine fois...", "Dommage !", "Bien tenté !"];
 
 
-// --- Les Questions ---
-const questions = [
-  { text: "Quelle est la signification de PIT ?", options: [{ t: "Passeport Informatique Telecom", img: "/astus.png", isCorrect: true }, { t: "Projet Informatique Telecom", img: "/astus.png", isCorrect: false }, { t: "Partage d’Informations pour Tous", img: "/astus.png", isCorrect: false }, { t: "Pas de IF en TC", img: "/astus.png", isCorrect: false }] },
-  { text: "En quelle année a été créée l’Astus?", image: "/astus.png", options: [{ t: "1957", isCorrect: false }, { t: "1998", isCorrect: true }, { t: "2005", isCorrect: false }, { t: "2026", isCorrect: false }] },
-  { text: "Quel est le bon logo du pull TC 2026?", options: [{ t: "1", img: "/Logo 1 Projet WEB 2026.png", isCorrect: true }, { t: "2", img: "/Logo 2 Projet WEB 2026.png", isCorrect: false }, { t: "3", img: "/Logo 3 Projet WEB 2026.png", isCorrect: false }, { t: "4",img: "/Logo 4 Projet WEB 2026.png", isCorrect: false }] },
-  { text: "Quelle est la matière du 3TCS1 avec le plus de rattrapages?", options: [{ t: "PBS", isCorrect: false }, { t: "IP", isCorrect: true }, { t: "NRP", isCorrect: false }, { t: "Théâtre", isCorrect: false }] },
-  { text: "Quel est le nom de la salle réseau au rez-de-chaussée?", options: [{ t: "TP Info A", isCorrect: false }, { t: "Plateforme Radiocom", isCorrect: false }, { t: "Salle ISO", isCorrect: true }, { t: "Salle Coin-coin", isCorrect: false }] },
-  { text: "Combien y a-t-il de départements à l’INSA ? (en comptant le FIMI)", options: [{ t: "8", isCorrect: false }, { t: "9", isCorrect: false }, { t: "10", isCorrect: true }, { t: "67", isCorrect: false }] },
-  { type: "image-order", text: "Trie ces événements Astus du plus ancien au plus récent", items: [{ id: "event2", label: "Soirée Casino", image: "/2.png" }, { id: "event4", label: "Nouveau bureau 2026", image: "/4.png" }, { id: "event1", label: "Création de l’Astus", image: "/1.png" }, { id: "event3", label: "Retrouvailles", image: "/3.png" }], correctOrder: ["event1", "event2", "event3", "event4"] },
-  { type: "spam-click", text: "Clique assez vite pour rendre ton projet avant la deadline. Objectif : 55 clics.", duration: 10, targetClicks: 55 },
-  { text: "Quelle était la couleur du bouton « Commencer » du quiz ?", options: [{ t: "Vert", img: "/vert.png", isCorrect: false }, { t: "Jaune", img:"/jaune.png", isCorrect: false }, { t: "Bleu", img:"/bleu.png", isCorrect: false }, { t: "Violet", img:"violet.png", isCorrect: true }] },
-  { type: "image-click", text: "Où se trouve le RI sur cette carte de l’INSA ?", image: "/carte-insa.png", correctZone: { xMin: 16.6, xMax: 19.5, yMin: 67.8, yMax: 72.5 } },
-];
-
-const questions2 = [
-  { text: "Quel est le nouveau président de l’Astus 2026?", options: [{ t: "Enzo", isCorrect: false }, { t: "Paul", isCorrect: false }, { t: "Laura", isCorrect: true }, { t: "Macron", isCorrect: false }] },
-  { text: "insa question 2", options: [{ t: "faux 1", isCorrect: false }, { t: "réponse bonne", isCorrect: true }] },
-];
-
-const questions3 = [
-  { text: "test1 question 1", options: [{ t: "faux 1", isCorrect: false }, { t: "réponse bonne", isCorrect: true }, { t: "faux 2", isCorrect: false }, { t: "faux 3", isCorrect: false }] },
-  { text: "test1 question 2", options: [{ t: "faux 1", isCorrect: false }, { t: "réponse bonne", isCorrect: true }] },
-];
 
 const questionCategory = [
   { name: "TC Quizz 1", index: 0 },
@@ -142,6 +119,22 @@ function Leaderboard() {
 
 // --- Page d'Accueil ---
 function Accueil({ setUsername, setUsedQuestions }) {
+
+  useEffect(() => {
+    const audioAccueil = new Audio('/MUSIQUE_ACCUEIL.mp3');
+    audioAccueil.loop = true; // Joue en boucle
+    audioAccueil.volume = 0.4; // 40% du volume pour ne pas exploser les oreilles
+    
+    // Le .catch est obligatoire car les navigateurs bloquent parfois l'autoplay
+    audioAccueil.play().catch(error => console.log("Attente d'interaction pour la musique"));
+
+    // Quand on quitte l'accueil (vers le jeu), on coupe le son !
+    return () => {
+      audioAccueil.pause();
+      audioAccueil.currentTime = 0;
+    };
+  }, []);
+  
   return (
     <div className="accueil-background">
       
@@ -369,6 +362,19 @@ function Jeu({ username, questions }) {
   const [feedbackMsg, setFeedbackMsg] = useState("");
   const [countdown, setCountdown] = useState(3);
 
+  useEffect(() => {
+    const audioJeu = new Audio('/MUSIQUE_QUESTION.mp3');
+    audioJeu.loop = true;
+    audioJeu.volume = 0.3; // Un peu plus bas pour laisser le joueur se concentrer
+    
+    audioJeu.play().catch(error => console.log("Erreur audio jeu :", error));
+
+    return () => {
+      audioJeu.pause();
+      audioJeu.currentTime = 0;
+    };
+  }, []);
+
   const sendScore = async (username, score, nbrQuestions) => {
     try {
       const response = await fetch("http://localhost:5001/api/scores", {
@@ -392,6 +398,18 @@ function Jeu({ username, questions }) {
   useEffect(() => {
     if (showScore) {
       sendScore(username, score, questions.length);
+      const pourcentage = (score / questions.length) * 100;
+      let sonFinal;
+
+      if (pourcentage >= 80) {
+        sonFinal = new Audio('/son-victoire.mp3');
+      } else if (pourcentage >= 50) {
+        sonFinal = new Audio('/son-moyen.mp3');
+      } else {
+        sonFinal = new Audio('/son-defaite.mp3');
+      }
+
+      sonFinal.play().catch(e => console.log("Erreur audio fin :", e));
     }
   }, [showScore, username, score, questions.length]);
 
@@ -440,10 +458,12 @@ function Jeu({ username, questions }) {
   const handleAnswer = (isCorrect) => {
     // 1. On gère le score et le message
     if (isCorrect) {
+      new Audio('/CORRECT.mp3').play().catch(e => console.log(e));
       setScore(score + 1);
       setFeedback(true);
       setFeedbackMsg(messagesTrue[Math.floor(Math.random() * messagesTrue.length)]);
     } else {
+      new Audio('/WRONGv2.mp3').play().catch(e => console.log(e));
       setFeedback(false);
       setFeedbackMsg(messagesFalse[Math.floor(Math.random() * messagesFalse.length)]);
     }
