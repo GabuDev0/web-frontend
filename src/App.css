@@ -220,3 +220,97 @@ button:active {
   box-shadow: 0 4px 10px rgba(245, 190, 39, 0.4);
   transform: translateY(-2px);
 }
+
+/* --- LAYOUT DE L'ACCUEIL (2 COLONNES) --- */
+.home-layout {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 40px;
+  width: 90%;
+  max-width: 1200px;
+  margin: 40px auto;
+}
+
+/* Responsive : Si l'écran est trop petit, on repasse en 1 colonne (empilé) */
+@media (max-width: 900px) {
+  .home-layout {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+/* --- LE LEADERBOARD ESTHÉTIQUE --- */
+.leaderboard-container {
+  width: 100%;
+  min-width: 300px;
+}
+
+.leaderboard-title {
+  color: #333;
+  text-align: center;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.leaderboard-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Les lignes du classement */
+.leaderboard-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  font-weight: bold;
+  color: #444;
+  
+  /* L'animation d'apparition */
+  opacity: 0;
+  transform: translateX(30px);
+  animation: slideInRight 0.5s ease-out forwards;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.leaderboard-item:hover {
+  transform: scale(1.02) translateX(0) !important;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* Animation d'entrée */
+@keyframes slideInRight {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ✨ Couleurs spéciales pour le TOP 3 ✨ */
+.rank-1 { background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%); color: white; border: none; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4); }
+.rank-2 { background: linear-gradient(135deg, #E0E0E0 0%, #BDBDBD 100%); color: #333; border: none; }
+.rank-3 { background: linear-gradient(135deg, #CD7F32 0%, #A0522D 100%); color: white; border: none; }
+
+.rank-badge {
+  font-size: 1.2rem;
+  font-weight: 900;
+  width: 30px;
+}
+
+.player-score {
+  background: rgba(0,0,0,0.1);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+}

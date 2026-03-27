@@ -67,6 +67,7 @@ function TabButtons({ setUsedQuestions }) {
     </div>
   );
 }
+
 // --- Classement de la page d'accueil ---
 function Leaderboard() {
   const [pastScores, setPastScores] = useState([]);
@@ -77,38 +78,35 @@ function Leaderboard() {
 
   const getScore = async () => {
     try {
-      // Récupère les 10 meilleurs scores de la DB (le 10 est setup dans le backend)
       const response = await fetch("http://localhost:5001/api/scores", {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
       });
-
       const data = await response.json();
-      console.log("Réponse backend :", data);
-
-      // tri décroissant des scores récupérés
       const sortedData = data.sort((a, b) => b.score - a.score);
-      
       setPastScores(sortedData);
-
     } catch (error) {
       console.error("Erreur :", error);
     }
   };
 
   return (
-    <div>
-      <h2>Classement 🏆</h2>
-      <ul>
+    <div className="leaderboard-container">
+      <h2 className="leaderboard-title">Classement 🏆</h2>
+      <ul className="leaderboard-list">
         {pastScores.map((scoreEntry, index) => (
-          <li key={index}>
-            #{index+1} - {scoreEntry.username} - ({scoreEntry.score})
+          <li 
+            key={index} 
+            /* On ajoute la classe rank-1, rank-2, rank-3 si c'est le top 3 */
+            className={`leaderboard-item ${index < 3 ? `rank-${index + 1}` : ''}`}
+            style={{ animationDelay: `${index * 0.1}s` }}
+          >
+            <span className="rank-badge">#{index+1}</span>
+            <span style={{ flexGrow: 1, textAlign: 'left', marginLeft: '15px' }}>{scoreEntry.username}</span>
+            <span className="player-score">{scoreEntry.score} pts</span>
           </li>
         ))}
       </ul>
-
     </div>
   )
 }
@@ -117,31 +115,32 @@ function Leaderboard() {
 function Accueil({ setUsername, setUsedQuestions }) {
   return (
     <div className="accueil-background">
-      <div className="glass-card">
+      
+      <div className="home-layout">
         
-        <img 
-          src="/favicon.png" 
-          alt="Logo TC Quiz" 
-          style={{ width: '150px', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.1))' }} 
-        />
+        <div className="glass-card" style={{ flex: '1.5', maxWidth: '600px' }}>
+          <img src="/favicon.png" alt="Logo TC Quiz" style={{ width: '150px', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.1))' }} />
+          <h1 style={{ color: '#333', margin: '0' }}>Le TC Quiz</h1>
+          
+          <TabButtons setUsedQuestions={setUsedQuestions} />
 
-        <h1 style={{ color: '#333', margin: '0' }}>Le TC Quiz</h1>
-        
-        <TabButtons setUsedQuestions={setUsedQuestions} />
+          <input
+            style={{...styles.textInput, textAlign: 'center', width: '80%', border: '2px solid #eee'}}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Entre ton pseudo..."
+          />
+          
+          <Link to="/jeu" style={{ width: '100%', textDecoration: 'none', display: 'flex', justifyContent: 'center' }}>
+            <button style={{...styles.button, width: '80%', padding: '15px', borderRadius: '50px', fontSize: '1.4rem', boxShadow: '0 4px 15px rgba(245, 190, 39, 0.5)'}}>
+              LANCER LA PARTIE
+            </button>
+          </Link>
+        </div>
 
-        <input
-          style={{...styles.textInput, textAlign: 'center', width: '80%', border: '2px solid #eee'}}
-          onChange={(e) => setUsername(e.target.value)}
-          placeholder="Entre ton pseudo..."
-        />
-        
-        <Link to="/jeu" style={{ width: '100%', textDecoration: 'none', display: 'flex', justifyContent: 'center' }}>
-          <button style={{...styles.button, width: '80%', padding: '15px', borderRadius: '50px', fontSize: '1.4rem', boxShadow: '0 4px 15px rgba(245, 190, 39, 0.5)'}}>
-            LANCER LA PARTIE
-          </button>
-        </Link>
-        
-        <Leaderboard />
+        <div className="glass-card-secondary">
+          <Leaderboard />
+        </div>
+
       </div>
     </div>
   );
