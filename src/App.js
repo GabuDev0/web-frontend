@@ -13,15 +13,18 @@ const messagesFalse = ["Peut mieux faire !","Raté...", "Presque !", "Une procha
 const questions = [
   { text: "Quelle est la signification de PIT ?", options: [{ t: "Passeport Informatique Telecom", img: "/astus.png", isCorrect: true }, { t: "Projet Informatique Telecom", img: "/astus.png", isCorrect: false }, { t: "Partage d’Informations pour Tous", img: "/astus.png", isCorrect: false }, { t: "Pas de IF en TC", img: "/astus.png", isCorrect: false }] },
   { text: "En quelle année a été créée l’Astus?", image: "/astus.png", options: [{ t: "1957", isCorrect: false }, { t: "1998", isCorrect: true }, { t: "2005", isCorrect: false }, { t: "2026", isCorrect: false }] },
+  { text: "Quel est le bon logo du pull TC 2026?", options: [{ t: "1", img: "/Logo 1 Projet WEB 2026.png", isCorrect: true }, { t: "2", img: "/Logo 2 Projet WEB 2026.png", isCorrect: false }, { t: "3", img: "/Logo 3 Projet WEB 2026.png", isCorrect: false }, { t: "4",img: "/Logo 4 Projet WEB 2026.png", isCorrect: false }] },
+  { text: "Quelle est la matière du 3TCS1 avec le plus de rattrapages?", options: [{ t: "PBS", isCorrect: false }, { t: "IP", isCorrect: true }, { t: "NRP", isCorrect: false }, { t: "Théâtre", isCorrect: false }] },
   { text: "Quel est le nom de la salle réseau au rez-de-chaussée?", options: [{ t: "TP Info A", isCorrect: false }, { t: "Plateforme Radiocom", isCorrect: false }, { t: "Salle ISO", isCorrect: true }, { t: "Salle Coin-coin", isCorrect: false }] },
-  { text: "Combien y’a t’il de départements à l’INSA ? (en comptant le FIMI)", options: [{ t: "8", isCorrect: false }, { t: "9", isCorrect: false }, { t: "10", isCorrect: true }, { t: "67", isCorrect: false }] },
+  { text: "Combien y a-t-il de départements à l’INSA ? (en comptant le FIMI)", options: [{ t: "8", isCorrect: false }, { t: "9", isCorrect: false }, { t: "10", isCorrect: true }, { t: "67", isCorrect: false }] },
   { type: "image-order", text: "Trie ces événements Astus du plus ancien au plus récent", items: [{ id: "event2", label: "Soirée Casino", image: "/2.png" }, { id: "event4", label: "Nouveau bureau 2026", image: "/4.png" }, { id: "event1", label: "Création de l’Astus", image: "/1.png" }, { id: "event3", label: "Retrouvailles", image: "/3.png" }], correctOrder: ["event1", "event2", "event3", "event4"] },
   { type: "spam-click", text: "Clique assez vite pour rendre ton projet avant la deadline. Objectif : 55 clics.", duration: 10, targetClicks: 55 },
-  { type: "image-click", text: "Où se trouve le RI sur cette carte de l’INSA ?", image: "/carte-insa.png", correctZone: { xMin: 16.6, xMax: 19.5, yMin: 67.8, yMax: 72.5 } }
+  { text: "Quelle était la couleur du bouton « Commencer » du quiz ?", options: [{ t: "Vert", img: "/vert.png", isCorrect: false }, { t: "Jaune", img:"/jaune.png", isCorrect: false }, { t: "Bleu", img:"/bleu.png", isCorrect: false }, { t: "Violet", img:"violet.png", isCorrect: true }] },
+  { type: "image-click", text: "Où se trouve le RI sur cette carte de l’INSA ?", image: "/carte-insa.png", correctZone: { xMin: 16.6, xMax: 19.5, yMin: 67.8, yMax: 72.5 } },
 ];
 
 const questions2 = [
-  { text: "insa question 1", options: [{ t: "faux 1", isCorrect: false }, { t: "réponse bonne", isCorrect: true }, { t: "faux 2", isCorrect: false }, { t: "faux 3", isCorrect: false }] },
+  { text: "Quel est le nouveau président de l’Astus 2026?", options: [{ t: "Enzo", isCorrect: false }, { t: "Paul", isCorrect: false }, { t: "Laura", isCorrect: true }, { t: "Macron", isCorrect: false }] },
   { text: "insa question 2", options: [{ t: "faux 1", isCorrect: false }, { t: "réponse bonne", isCorrect: true }] },
 ];
 
@@ -31,15 +34,15 @@ const questions3 = [
 ];
 const questionCategory = [
   {
-    name: "TC",
+    name: "Quiz 1",
     questions: questions
   },
   {
-    name: "INSA",
+    name: "Quiz 2",
     questions: questions2
   },
   {
-    name: "Test1",
+    name: "Quiz 3",
     questions: questions3
   }
 ]
@@ -132,7 +135,7 @@ function Accueil({ setUsername, setUsedQuestions }) {
           
           <Link to="/jeu" style={{ width: '100%', textDecoration: 'none', display: 'flex', justifyContent: 'center' }}>
             <button style={{...styles.button, width: '80%', padding: '15px', borderRadius: '50px', fontSize: '1.4rem', boxShadow: '0 4px 15px rgba(245, 190, 39, 0.5)'}}>
-              LANCER LA PARTIE
+              COMMENCER LA PARTIE
             </button>
           </Link>
         </div>
@@ -464,7 +467,7 @@ const styles = {
     padding: '10px 20px',
     fontSize: '1.2rem',
     cursor: 'pointer',
-    backgroundColor: '#F5BE27',
+    backgroundColor: '#EE82EE',
     color: 'white',
     border: 'none',
     borderRadius: '5px' },
