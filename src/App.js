@@ -270,16 +270,30 @@ function SpamClickQuestion({ question, handleAnswer }) {
   );
 }
 
-// --- Question clic sur image ---
+/// --- Question clic sur image ---
 function ImageClickQuestion({ question, handleAnswer }) {
   const [clickedPoint, setClickedPoint] = useState(null);
   const [message, setMessage] = useState("");
 
-  const handleImageClick = (event) => {
-    const rect = event.target.getBoundingClientRect();
+
+  const [hoverPos, setHoverPos] = useState({ x: 50, y: 50 });
+  const [isHovering, setIsHovering] = useState(false);
+
+
+  const getCoordinates = (event) => {
+    const rect = event.currentTarget.getBoundingClientRect();
     const x = ((event.clientX - rect.left) / rect.width) * 100;
     const y = ((event.clientY - rect.top) / rect.height) * 100;
+    return { x, y };
+  };
 
+  const handleMouseMove = (event) => {
+    const { x, y } = getCoordinates(event);
+    setHoverPos({ x, y });
+  };
+
+  const handleImageClick = (event) => {
+    const { x, y } = getCoordinates(event);
     setClickedPoint({ x, y });
 
     const { xMin, xMax, yMin, yMax } = question.correctZone;
@@ -294,11 +308,50 @@ function ImageClickQuestion({ question, handleAnswer }) {
     <div style={{ textAlign: 'center' }}>
       <p style={{ fontSize: '1.2rem' }}>{question.text}</p>
 
-      <div style={{ position: 'relative', width: '90%', maxWidth: '700px', margin: '0 auto' }}>
-        <img src={question.image} alt="Carte de l'INSA" onClick={handleImageClick} style={{ display: 'block', width: '100%', borderRadius: '10px', cursor: 'crosshair', boxShadow: '0px 4px 8px rgba(0,0,0,0.1)' }} />
+      <div 
+        style={{ 
+          position: 'relative', 
+          width: '90%', 
+          maxWidth: '700px', 
+          margin: '0 auto',
+          overflow: 'hidden',
+          borderRadius: '10px',
+          boxShadow: '0px 4px 8px rgba(0,0,0,0.1)',
+          cursor: 'crosshair'
+        }}
+        onMouseMove={handleMouseMove}
+        onMouseEnter={() => setIsHovering(true)}
+        onMouseLeave={() => setIsHovering(false)}
+        onClick={handleImageClick}
+      >
+        <img 
+          src={question.image} 
+          alt="Carte de l'INSA" 
+          style={{ 
+            display: 'block', 
+            width: '100%',
+
+            transform: isHovering ? 'scale(2.5)' : 'scale(1)', 
+            transformOrigin: `${hoverPos.x}% ${hoverPos.y}%`, 
+            transition: 'transform 0.15s ease-out',
+            pointerEvents: 'none'
+          }} 
+        />
 
         {clickedPoint && (
-          <div style={{ position: 'absolute', left: `${clickedPoint.x}%`, top: `${clickedPoint.y}%`, transform: 'translate(-50%, -50%)', width: '14px', height: '14px', borderRadius: '50%', backgroundColor: 'red', border: '2px solid white', pointerEvents: 'none' }} />
+          <div style={{ 
+            position: 'absolute', 
+            left: `${clickedPoint.x}%`, 
+            top: `${clickedPoint.y}%`, 
+            transform: 'translate(-50%, -50%)', 
+            width: '14px', 
+            height: '14px', 
+            borderRadius: '50%', 
+            backgroundColor: 'red', 
+            border: '2px solid white', 
+            pointerEvents: 'none',
+            zIndex: 10
+          }} />
         )}
       </div>
 
