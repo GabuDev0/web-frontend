@@ -300,6 +300,10 @@ function ImageClickQuestion({ question, handleAnswer }) {
   };
 
   const handleMouseMove = (event) => {
+
+    if (!isHovering) {
+      setIsHovering(true);
+    }
     const { x, y } = getCoordinates(event);
     setHoverPos({ x, y });
   };
