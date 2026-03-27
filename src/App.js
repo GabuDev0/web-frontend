@@ -32,28 +32,53 @@ const questions3 = [
   { text: "test1 question 1", options: [{ t: "faux 1", isCorrect: false }, { t: "réponse bonne", isCorrect: true }, { t: "faux 2", isCorrect: false }, { t: "faux 3", isCorrect: false }] },
   { text: "test1 question 2", options: [{ t: "faux 1", isCorrect: false }, { t: "réponse bonne", isCorrect: true }] },
 ];
+
 const questionCategory = [
-  {
-    name: "Quiz 1",
-    questions: questions
-  },
-  {
-    name: "Quiz 2",
-    questions: questions2
-  },
-  {
-    name: "Quiz 3",
-    questions: questions3
-  }
-]
+  { name: "TC Quizz 1", index: 0 },
+  { name: "TC Quizz 2", index: 1 },
+  { name: "TC Quizz 3", index: 2 }
+];
 
 // --- Boutons de choix des questions ---
 function TabButtons({ setUsedQuestions }) {
+  const [allQuestions, setAllQuestions] = useState([]);
   const [activeTab, setActiveTab] = useState(0);
+
+  useEffect(() => {
+    getQuestions();
+  }, []);
+
+  const getQuestions = async () => {
+    try {
+      const response = await fetch("http://localhost:5001/api/questions", {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await response.json();
+      
+      setAllQuestions(data);
+      
+      console.log("fetchQuestions backend response:", data);
+    } catch (error) {
+      console.error("Erreur :", error);
+    }
+  };
+
+  useEffect(() => {
+    const categoryQuestions = [];
+
+    for (const q of allQuestions) {
+      if (Number(q.category) === activeTab) {
+        categoryQuestions.push(q);
+      }
+    }
+
+    setUsedQuestions(categoryQuestions);
+
+  }, [activeTab, allQuestions]);
 
   const handleClick = (index) => {
     setActiveTab(index);
-    setUsedQuestions(questionCategory[index].questions);
   };
 
   return (
@@ -88,6 +113,7 @@ function Leaderboard() {
       const data = await response.json();
       const sortedData = data.sort((a, b) => b.score - a.score);
       setPastScores(sortedData);
+      console.log("getScore backend response:", data)
     } catch (error) {
       console.error("Erreur :", error);
     }
@@ -120,12 +146,12 @@ function Accueil({ setUsername, setUsedQuestions }) {
     <div className="accueil-background">
       
       <div className="home-layout">
-        
         <div className="glass-card" style={{ flex: '1.5', maxWidth: '600px' }}>
           <img src="/favicon.png" alt="Logo TC Quiz" style={{ width: '150px', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.1))' }} />
           <h1 style={{ color: '#333', margin: '0' }}>Le TC Quiz</h1>
           
           <TabButtons setUsedQuestions={setUsedQuestions} />
+          
 
           <input
             style={{...styles.textInput, textAlign: 'center', width: '80%', border: '2px solid #eee'}}
@@ -302,7 +328,7 @@ function Jeu({ username, questions }) {
 
       const data = await response.json();
       console.log({ username, score, nbrQuestions });
-      console.log("Réponse backend :", data);
+      console.log("sendScore backend response:", data);
       
 
     } catch (error) {
@@ -498,7 +524,7 @@ const styles = {
 
 // --- App Principal ---
 export default function App() {
-  const [usedQuestions, setUsedQuestions] = useState(questionCategory[0].questions);
+  const [usedQuestions, setUsedQuestions] = useState([]);
   const [username, setUsername] = useState("");
 
   return (
