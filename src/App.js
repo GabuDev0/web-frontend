@@ -11,9 +11,8 @@ const messagesFalse = ["Peut mieux faire !","Raté...", "Presque !", "Une procha
 
 
 const questionCategory = [
-  { name: "TC Quizz 1", index: 0 },
-  { name: "TC Quizz 2", index: 1 },
-  { name: "TC Quizz 3", index: 2 }
+  { name: "TC Quiz 1", index: 0 },
+  { name: "TC Quiz 2", index: 1 },
 ];
 
 // --- Boutons de choix des questions ---
@@ -136,6 +135,14 @@ function Leaderboard( { category, setCategory } ) {
   )
 }
 
+const formatTime = (totalSeconds) => {
+  if (totalSeconds < 0) totalSeconds = 0;
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  return [h, m, s].map(v => v < 10 ? "0" + v : v).join(":");
+};
+
 // --- Page d'Accueil ---
 function Accueil({ category, setCategory, setUsername, setUsedQuestions }) {
 
@@ -160,7 +167,7 @@ function Accueil({ category, setCategory, setUsername, setUsedQuestions }) {
       <div className="home-layout">
         <div className="glass-card" style={{ flex: '1.5', maxWidth: '600px' }}>
           <img src="/favicon.png" alt="Logo TC Quiz" style={{ width: '150px', filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.1))' }} />
-          <h1 style={{ color: '#333', margin: '0' }}>Le TC Quiz</h1>
+          <h1 style={{ color: '#333', margin: '0' }}>Bienvenue sur le TC QUIZ !!!</h1>
           
           <TabButtons category={category} setCategory={setCategory} setUsedQuestions={setUsedQuestions} />
           
@@ -196,6 +203,92 @@ function SortableImageCard({ item }) {
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
       <img src={item.image} alt={item.label} style={{ width: '100%', maxWidth: '250px', height: '150px', objectFit: 'cover', borderRadius: '8px', marginBottom: '10px' }} />
       <div style={{ fontWeight: 'bold' }}>{item.label}</div>
+    </div>
+  );
+}
+
+function TimerCheckQuestion({ question, gameStartTime, handleAnswer }) {
+  const [now, setNow] = useState(Date.now());
+
+  // On force le rafraîchissement toutes les secondes pour mettre à jour les boutons
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // --- AJOUTE CECI POUR DEBUGGER ---
+  console.log("Données des options reçues :", question.options);
+  // ---------------------------------
+
+  const elapsedTotalSeconds = Math.floor((now - gameStartTime) / 1000);
+
+  return (
+    <div style={{ textAlign: 'center' }}>
+      <p style={{ fontSize: '1.4rem', fontWeight: 'bold', marginBottom: '20px' }}>{question.text}</p>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap' }}>
+        {question.options.map((option, index) => (
+          <button 
+            key={index} 
+            onClick={() => handleAnswer(option.isCorrect)} 
+            style={styles.optionButton}
+          >
+            <span style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
+              {formatTime(elapsedTotalSeconds + Number(option.offset || 0))}
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MemoryQuestion({ question, handleAnswer }) {
+  const [timeLeft, setTimeLeft] = useState(question.memoryTime || 10);
+  const [isMemorizing, setIsMemorizing] = useState(true);
+
+  useEffect(() => {
+    if (timeLeft > 0 && isMemorizing) {
+      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (timeLeft === 0) {
+      setIsMemorizing(false);
+    }
+  }, [timeLeft, isMemorizing]);
+
+  return (
+    <div style={{ textAlign: 'center' }}>
+      {isMemorizing ? (
+        <div>
+          <h2 style={{ color: '#dc3545' }}>Mémorise bien l'image ! 🧠</h2>
+          <p style={{ fontSize: '1.5rem' }}>Temps restant : <strong>{timeLeft}s</strong></p>
+          <img 
+            src={question.image} 
+            alt="Mémorisation" 
+            style={{ 
+              width: '90%', 
+              maxWidth: '500px', 
+              borderRadius: '15px', 
+              border: '5px solid #EE82EE',
+              boxShadow: '0px 10px 20px rgba(0,0,0,0.2)'
+            }} 
+          />
+        </div>
+      ) : (
+        <div>
+          <p style={{ fontSize: '1.4rem', fontWeight: 'bold', marginBottom: '20px' }}>{question.text}</p>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap' }}>
+            {question.options.map((option, index) => (
+              <button 
+                key={index} 
+                onClick={() => handleAnswer(option.isCorrect)} 
+                style={styles.optionButton}
+              >
+                <div style={{ fontWeight: 'bold' }}>{option.t}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -384,6 +477,7 @@ function Jeu({ category, username, questions }) {
   const [feedback, setFeedback] = useState(null);
   const [feedbackMsg, setFeedbackMsg] = useState("");
   const [countdown, setCountdown] = useState(3);
+  const [gameStartTime] = useState(Date.now());
 
   useEffect(() => {
     const audioJeu = new Audio('/MUSIQUE_QUESTION.mp3');
@@ -557,6 +651,14 @@ function Jeu({ category, username, questions }) {
                 <SpamClickQuestion question={currentQ} handleAnswer={handleAnswer} />
               ) : currentQ.type === "image-click" ? (
                 <ImageClickQuestion question={currentQ} handleAnswer={handleAnswer} />
+              ) : currentQ.type === "memory" ? ( // AJOUT ICI
+                <MemoryQuestion question={currentQ} handleAnswer={handleAnswer} />
+              ) : currentQ.type === "timer-check" ? ( // AJOUT ICI
+                <TimerCheckQuestion 
+                  question={currentQ} 
+                  gameStartTime={gameStartTime} 
+                  handleAnswer={handleAnswer} 
+                  />
               ) : (
                 <>
                   <p style={{ fontSize: '1.2rem' }}>{currentQ.text}</p>
