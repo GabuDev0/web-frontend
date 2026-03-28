@@ -506,7 +506,7 @@ function Jeu({ category, username, questions }) {
 
   // rajouter <JeuHeader username={username} />
   return (
-    <div style={{ textAlign: 'center', marginTop: '100px', position: 'relative' }}> 
+    <div style={{ textAlign: 'center', marginTop: '50px', position: 'relative' }}> 
 
       {countdown !== null ? ( 
         <div className={`telecom-countdown-container ${countdown === "Partez !" ? "fade-out-end" : ""}`}>
