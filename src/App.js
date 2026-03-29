@@ -207,6 +207,292 @@ function SortableImageCard({ item }) {
   );
 }
 
+function AudioGuessQuestion({ question, handleAnswer }) {
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const playAudio = () => {
+    if (isPlaying) return;
+    
+    const audio = new Audio(`/${question.audioFile}`);
+    setIsPlaying(true);
+    
+    audio.play().catch(err => console.log("Erreur audio :", err));
+    
+    // On remet l'état à false quand le son est fini pour pouvoir le rejouer
+    audio.onended = () => setIsPlaying(false);
+  };
+
+  return (
+    <div style={{ textAlign: 'center', padding: '20px' }}>
+      <p style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '30px' }}>{question.text}</p>
+      
+      {/* Gros bouton central pour le son */}
+      <div style={{ marginBottom: '40px' }}>
+        <button 
+          onClick={playAudio} 
+          style={{
+            ...styles.button,
+            width: '120px',
+            height: '120px',
+            borderRadius: '50%',
+            fontSize: '3rem',
+            backgroundColor: isPlaying ? '#ccc' : '#17a2b8', // Change de couleur si en lecture
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto',
+            boxShadow: '0 6px 12px rgba(0,0,0,0.2)',
+            transition: 'all 0.3s ease'
+          }}
+          disabled={isPlaying}
+        >
+          {isPlaying ? '⏳' : '🔊'}
+        </button>
+        <p style={{ marginTop: '10px', color: '#666' }}>
+          {isPlaying ? "Écoute en cours..." : "Clique pour écouter le son"}
+        </p>
+      </div>
+
+      {/* Options de réponse */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap' }}>
+        {question.options.map((option, index) => (
+          <button 
+            key={index} 
+            onClick={() => handleAnswer(option.isCorrect)} 
+            style={styles.optionButton}
+          >
+            <div style={{ fontWeight: 'bold' }}>{option.t}</div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MatchQuestion({ question, handleAnswer }) {
+  const [selectedLeft, setSelectedLeft] = useState(null);
+  const [matchedIds, setMatchedIds] = useState([]);
+  const [shuffledRight, setShuffledRight] = useState([]);
+
+  // Au chargement, on mélange uniquement la colonne de droite
+  useEffect(() => {
+    const rightSide = question.pairs.map(p => ({ id: p.id, content: p.right, img: p.rightImg }));
+    setShuffledRight([...rightSide].sort(() => Math.random() - 0.5));
+  }, [question]);
+
+  const handleSelectLeft = (id) => {
+    if (matchedIds.includes(id)) return;
+    setSelectedLeft(id === selectedLeft ? null : id); // Toggle sélection
+  };
+
+  const handleSelectRight = (id) => {
+    if (selectedLeft === null || matchedIds.includes(id)) return;
+
+    if (selectedLeft === id) {
+      // C'est un match !
+      const newMatches = [...matchedIds, id];
+      setMatchedIds(newMatches);
+      setSelectedLeft(null);
+      new Audio('/CORRECT.mp3').play().catch(e => {});
+
+      // Si toutes les paires sont trouvées
+      if (newMatches.length === question.pairs.length) {
+        setTimeout(() => handleAnswer(true), 1000);
+      }
+    } else {
+      // Erreur
+      handleAnswer(false);
+    }
+  };
+
+  return (
+    <div style={{ textAlign: 'center' }}>
+      <p style={{ fontSize: '1.4rem', fontWeight: 'bold', marginBottom: '20px' }}>{question.text}</p>
+      
+      <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'flex-start', gap: '20px', marginTop: '30px' }}>
+        
+        {/* Colonne GAUCHE */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          {question.pairs.map((pair) => (
+            <button
+              key={pair.id}
+              onClick={() => handleSelectLeft(pair.id)}
+              style={{
+                ...styles.matchItem,
+                borderColor: matchedIds.includes(pair.id) ? '#28a745' : (selectedLeft === pair.id ? '#EE82EE' : '#F5BE27'),
+                backgroundColor: matchedIds.includes(pair.id) ? '#d4edda' : (selectedLeft === pair.id ? '#f3e5f5' : '#fff'),
+                opacity: matchedIds.includes(pair.id) ? 0.6 : 1,
+                transform: selectedLeft === pair.id ? 'scale(1.05)' : 'scale(1)'
+              }}
+            >
+              {pair.leftImg && <img src={pair.leftImg} style={{ width: '50px', marginBottom: '5px' }} alt="" />}
+              <div>{pair.left}</div>
+            </button>
+          ))}
+        </div>
+
+        {/* Colonne DROITE */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          {shuffledRight.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => handleSelectRight(item.id)}
+              style={{
+                ...styles.matchItem,
+                borderColor: matchedIds.includes(item.id) ? '#28a745' : '#F5BE27',
+                backgroundColor: matchedIds.includes(item.id) ? '#d4edda' : '#fff',
+                opacity: matchedIds.includes(item.id) ? 0.6 : 1,
+                cursor: selectedLeft ? 'pointer' : 'not-allowed'
+              }}
+            >
+              {item.img && <img src={item.img} style={{ width: '50px', marginBottom: '5px' }} alt="" />}
+              <div>{item.content}</div>
+            </button>
+          ))}
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+function MovingClickQuestion({ question, handleAnswer }) {
+  const [clicks, setClicks] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(question.duration || 10);
+  const [started, setStarted] = useState(false);
+  const [finished, setFinished] = useState(false);
+  const [pos, setPos] = useState({ top: '50%', left: '50%' });
+
+  const getRandomPos = () => {
+    const top = Math.floor(Math.random() * 70) + 15;
+    const left = Math.floor(Math.random() * 70) + 15;
+    return { top: `${top}%`, left: `${left}%` };
+  };
+
+  const startGame = () => {
+    if (started || finished) return;
+    setStarted(true);
+    setPos(getRandomPos());
+    
+    let timer = question.duration;
+    const interval = setInterval(() => {
+      timer -= 1;
+      setTimeLeft(timer);
+      if (timer <= 0) {
+        clearInterval(interval);
+        setFinished(true);
+        setClicks((finalClicks) => {
+          const isCorrect = finalClicks >= question.targetClicks;
+          setTimeout(() => handleAnswer(isCorrect), 800);
+          return finalClicks;
+        });
+      }
+    }, 1000);
+  };
+
+  const handleClick = (e) => {
+    // On stoppe la propagation pour éviter tout comportement par défaut du navigateur
+    e.preventDefault();
+    if (!started || finished) return;
+
+    // --- AJOUT DU SON DE PORTE ---
+    const doorSound = new Audio('/porte.mp3'); 
+    doorSound.volume = 0.6; // Optionnel : ajuste le volume entre 0 et 1
+    doorSound.play().catch(err => console.log("Erreur audio :", err));
+    // ----------------------------
+    
+    const newClicks = clicks + 1;
+    setClicks(newClicks);
+
+    if (newClicks >= question.targetClicks) {
+      setFinished(true);
+      setTimeout(() => handleAnswer(true), 800);
+    } else {
+      setPos(getRandomPos());
+    }
+  };
+
+  return (
+    <div style={{ textAlign: 'center' }}>
+      <p style={{ fontSize: '1.4rem', fontWeight: 'bold' }}>{question.text}</p>
+      
+      <div style={{ marginBottom: '15px', display: 'flex', justifyContent: 'center', gap: '30px', fontSize: '1.2rem' }}>
+        <span>⏱️ {timeLeft}s</span>
+        <span>🎯 {clicks} / {question.targetClicks}</span>
+      </div>
+
+      <div style={{ 
+        position: 'relative', 
+        height: '450px', 
+        width: '100%', 
+        maxWidth: '700px', 
+        margin: '10px auto', 
+        border: '3px dashed #EE82EE', 
+        borderRadius: '20px', 
+        backgroundColor: 'rgba(238, 130, 238, 0.05)',
+        overflow: 'hidden',
+        // On force le curseur en viseur pour aider le joueur
+        cursor: started && !finished ? 'crosshair' : 'default'
+      }}>
+        {!started && !finished ? (
+          <button 
+            onClick={startGame} 
+            style={{ ...styles.button, position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, 0%)' }}
+          >
+            🚪CLIQUE ICI🚪
+          </button>
+        ) : started && !finished ? (
+          <button
+            onClick={handleClick}
+            onMouseDown={(e) => e.preventDefault()} // Empêche le focus visuel qui peut créer un contour
+            style={{
+              position: 'absolute',
+              top: pos.top,
+              left: pos.left,
+              transform: 'translate(0%, 0%)',
+              // --- RESET TOTAL DU STYLE ---
+              background: 'none',
+              border: 'none',
+              padding: '0',
+              margin: '0',
+              cursor: 'pointer',
+              outline: 'none',
+              boxShadow: 'none',
+              appearance: 'none',
+              // --- STABILITÉ ---
+              transition: 'none', 
+              userSelect: 'none',
+              width: '100px', // Hitbox fixe
+              height: '100px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            {/* L'image devient la seule chose visible, mais sans bouger au clic */}
+            <img 
+              src={question.image || "/favicon.png"} 
+              alt="target" 
+              style={{ 
+                width: '200px', 
+                height: '200px', 
+                objectFit: 'contain',
+                pointerEvents: 'none' // L'image ne doit pas intercepter le clic, c'est le bouton qui gère
+              }} 
+            />
+          </button>
+        ) : (
+          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
+            <h2 style={{ color: clicks >= question.targetClicks ? '#28a745' : '#dc3545' }}>
+              {clicks >= question.targetClicks ? "Rentrez chez vous, c'est chez nous ici ! 📡" : "Nous sommes envahis...😫"}
+            </h2>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function TimerCheckQuestion({ question, gameStartTime, handleAnswer }) {
   const [now, setNow] = useState(Date.now());
 
@@ -341,7 +627,7 @@ function SpamClickQuestion({ question, handleAnswer }) {
       currentTime -= 1;
       setTimeLeft(currentTime);
 
-      if (currentTime <= 0) {
+      if (currentTime <= 0){
         clearInterval(interval);
         setFinished(true);
         setClicks((finalClicks) => {
@@ -366,11 +652,11 @@ function SpamClickQuestion({ question, handleAnswer }) {
 
       <div>
         <button onClick={handleClick} disabled={!started || finished} style={{ padding: '30px 50px', fontSize: '1.5rem', cursor: started && !finished ? 'pointer' : 'not-allowed', backgroundColor: started && !finished ? '#F5BE27' : '#ccc', color: 'white', border: 'none', borderRadius: '12px' }}>
-          CLIQUE ICI
+          🚪CLIQUE ICI🚪
         </button>
       </div>
 
-      {finished && <p style={{ marginTop: '20px', fontWeight: 'bold' }}>{clicks >= question.targetClicks ? "Projet rendu à temps, pas de rattrapage." : "Deadline ratée... les rattrapages approchent."}</p>}
+      {finished && <p style={{ marginTop: '20px', fontWeight: 'bold' }}>{clicks >= question.targetClicks ? "Rentrez chez vous ! C'est chez nous ici !📡" : "Nous sommes envahis...😫"}</p>}
     </div>
   );
 }
@@ -659,6 +945,12 @@ function Jeu({ category, username, questions }) {
                   gameStartTime={gameStartTime} 
                   handleAnswer={handleAnswer} 
                   />
+              ) : currentQ.type === "moving-click" ? ( // <--- AJOUT ICI
+                <MovingClickQuestion question={currentQ} handleAnswer={handleAnswer} />
+              ) : currentQ.type === "audio-guess" ? ( // <--- AJOUT ICI
+                <AudioGuessQuestion question={currentQ} handleAnswer={handleAnswer} />
+              ) : currentQ.type === "match" ? ( // <--- AJOUT ICI
+                <MatchQuestion question={currentQ} handleAnswer={handleAnswer} />
               ) : (
                 <>
                   <p style={{ fontSize: '1.2rem' }}>{currentQ.text}</p>
@@ -719,6 +1011,22 @@ const styles = {
     backgroundColor: '#f8f9fa',
     border: 'none',
     borderRadius: '5px' },
+
+  matchItem: {
+    padding: '15px',
+    width: '160px',
+    minHeight: '80px',
+    border: '3px solid',
+    borderRadius: '12px',
+    cursor: 'pointer',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.2s ease',
+    fontWeight: 'bold',
+    fontSize: '0.9rem'
+  },
 };
 
 // --- App Principal ---
